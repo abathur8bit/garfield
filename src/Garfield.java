@@ -41,7 +41,6 @@ public class Garfield {
 
     public static void usage() {
         System.out.println("Garfield Log Viewer");
-        System.out.println("By Lee Patterson");
         System.exit(1);
     }
 
@@ -62,8 +61,6 @@ public class Garfield {
         console.initPair(CURRENT_LINE,NConsole.COLOR_BLACK,NConsole.COLOR_WHITE);
         console.initPair(STATUS_BAR,NConsole.COLOR_YELLOW,NConsole.COLOR_BLUE);
 //        showSplash();
-        int result = console.add(5);
-        System.out.println("NConsole.add="+result);
     }
 
     public void showSplash() {
@@ -129,6 +126,9 @@ public class Garfield {
 
     private void showLine(int lineNum,boolean selected,int x,int y,int maxWidth) {
         String row = fileContents.get(lineNum);
+        if(row.length() > maxWidth) {
+            row = row.substring(0,maxWidth);
+        }
 
         console.move(x,y);
         if(selected) {
@@ -148,7 +148,7 @@ public class Garfield {
         console.move(0,getMaxY());
         fillLine(0,screenWidth,' ');
         console.move(0,getMaxY());
-        console.printw("["+filename+"] selectedLine="+selectedLine+" lineIndex="+lineIndex+" currentLine=["+currentLine+"] screenW="+screenWidth+" screenH="+screenHeight);
+        console.printw("Type 'h' for help | Line: "+currentLine+" of "+maxLines+" | File: "+filename+" | W:"+screenWidth+" H:"+screenHeight);
         console.attroff(STATUS_BAR);
     }
 
