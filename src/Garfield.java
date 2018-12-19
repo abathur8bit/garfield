@@ -8,6 +8,7 @@ import java.util.ArrayList;
 public class Garfield {
     static int CURRENT_LINE = 1;
     static int NORMAL_LINE = 2;
+    static int STATUS_BAR = 3;
 
     private NConsole console;
     private String filename;
@@ -41,6 +42,7 @@ public class Garfield {
         console = new NConsole();
         console.initscr();
         console.initPair(CURRENT_LINE,NConsole.COLOR_BLACK,NConsole.COLOR_WHITE);
+        console.initPair(STATUS_BAR,NConsole.COLOR_YELLOW,NConsole.COLOR_BLUE);
 //        showSplash();
         int result = console.add(5);
         System.out.println("NConsole.add="+result);
@@ -113,10 +115,7 @@ public class Garfield {
         console.move(x,y);
         if(selected) {
             console.attron(CURRENT_LINE);
-            if(row.length()>3) {
-                row = row.substring(3);
-            }
-            console.printw("-->"+row);
+            console.printw(row);
             fillLine(row.length(),maxWidth-row.length()-1,' ');
             console.attroff(CURRENT_LINE);
         } else {
@@ -126,9 +125,13 @@ public class Garfield {
     }
 
     private void showStatusBar() {
-        final int currentLine = selectedLine+lineIndex;
+        console.attron(STATUS_BAR);
+        final int currentLine = selectedLine+lineIndex+1;   //when showing the user, first line is 1, not 0.
+        console.move(0,getMaxY());
+        fillLine(0,screenWidth,' ');
         console.move(0,getMaxY());
         console.printw("["+filename+"] selectedLine="+selectedLine+" lineIndex="+lineIndex+" currentLine=["+currentLine+"] screenW="+screenWidth+" screenH="+screenHeight);
+        console.attroff(STATUS_BAR);
     }
 
     private void fillLine(int startx,int width,char ch) {
