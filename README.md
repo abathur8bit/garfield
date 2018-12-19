@@ -4,7 +4,10 @@ Garfield, or garf for short, is a console based log viewer written in Java. It u
 **Note** that Windows support isn't in place yet. Plan is to use the same methods as on *nix systems. 
 
 #JNI
-See [NConsole](https://github.com/abathur8bit/nconsole) for Java Native Interface (JNI) calls.
+See [nconsole] for Java Native Interface (JNI) library.
 
 # Building/running
-Currently tied to nconsole project, and I need to fix up the project to make it so someone else can run it. 
+Currently tied to [nconsole] project, and I need to fix up the project to make it so someone else can run it. 
+
+[garfield]: https://github.com/abathur8bit/garfield
+[nconsole]: https://github.com/abathur8bit/nconsole
