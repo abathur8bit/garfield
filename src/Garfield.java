@@ -65,15 +65,20 @@ public class Garfield {
 
     public void showSplash() {
         console.clear();
-        console.printCenterX(console.getScreenHeight()/2,"Garfield the Log Viewer");
+        console.printCenterX(console.getHeight()/2,"Garfield the Log Viewer");
         console.getch();
     }
 
     public void view() {
         console.clear();
+        screenWidth = console.getWidth();
+        screenHeight = console.getHeight();
         while(running) {
-            screenWidth = console.getScreenWidth();
-            screenHeight = console.getScreenHeight();
+            if(console.updateSize()) {
+                screenWidth = console.getWidth();
+                screenHeight = console.getHeight();
+                console.clear();
+            }
             final int maxy = getMaxY();
 
             showFile();
@@ -163,7 +168,7 @@ public class Garfield {
     }
 
     public int getMaxY() {
-        return console.getScreenHeight()-1;
+        return console.getHeight()-1;
     }
 
     private void cursorUp() {
