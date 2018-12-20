@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/garfield.iml" filepath="$PROJECT_DIR$/.idea/garfield.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../nconsole/src/nconsole.iml" filepath="$PROJECT_DIR$/../nconsole/src/nconsole.iml" />
+    </modules>
+  </component>
+</project>
