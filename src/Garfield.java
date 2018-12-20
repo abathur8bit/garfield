@@ -17,17 +17,19 @@
  * ******************************************************************************/
 
 import com.axorion.NConsole;
-import org.omg.CosNaming.NamingContextOperations;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * File viewer command line application. Like less, but you can do a few other things to make viewing and searching
+ * files easier.
+ */
 public class Garfield {
     static final int DIRECTION_FORWARD = 1;
     static final int DIRECTION_REVERSE = -1;
-    static final int LINE_SELECTED_FLAG=1;
     static final int LINE_FOUND_FLAG=2;
     static final int LINE_BOOKMARKED_FLAG=4;
 
@@ -73,6 +75,11 @@ public class Garfield {
         app.view();
     }
 
+    /**
+     * Constructs the viewer, initializes the console, but doesn't load the file.
+     * @param filename Filename that will e loaded.
+     */
+
     public Garfield(String filename) {
         this.filename = filename;
         console = new NConsole();
@@ -90,6 +97,7 @@ public class Garfield {
         console.getch();
     }
 
+    /** Our main loop. Displays everything on the screen, including the file and status bar. */
     public void view() {
         console.clear();
         screenWidth = console.getWidth();
@@ -142,6 +150,7 @@ public class Garfield {
         lineFlags = new int[maxLines];
     }
 
+    /** Displays the lines of the file. */
     private void showFile() {
         console.home();
 
@@ -156,6 +165,15 @@ public class Garfield {
         }
     }
 
+    /**
+     * Show the specified line as either selected or not.
+     *
+     * @param lineNum The line of the file to show.
+     * @param selected true to show as a selected line, false to show as normal.
+     * @param x X screen position to display the line.
+     * @param y Y screen position to display the line.
+     * @param maxWidth maximum width to of the line, won't print more then this number of characers.
+     */
     private void showLine(int lineNum,boolean selected,int x,int y,int maxWidth) {
         String row = fileContents.get(lineNum);
         if(row.length() > maxWidth) {
@@ -167,25 +185,31 @@ public class Garfield {
         if(selected) {
             console.attron(CURRENT_LINE_PAIR);
             console.printw(row);
-            fillLine(row.length(),maxWidth-row.length()-1,' ');
+            fillLine(maxWidth-row.length()-1,' ');
             console.attroff(CURRENT_LINE_PAIR);
 
             if(lineFlags[lineNum] != 0) {
                 //show first char as flag color
                 console.move(x,y);
                 pair = setLineColor(lineNum);
-                fillLine(0,1,' ');
+                fillLine(1,' ');
                 console.attroff(pair);
             }
         } else {
             pair = setLineColor(lineNum);
             console.printw(row);
-            fillLine(row.length(),maxWidth-row.length()-1,' ');
+            fillLine(maxWidth-row.length()-1,' ');
             console.attroff(pair);
         }
 
     }
 
+    /**
+     * Changes the current color pair depending on the flags for the given line.
+     *
+     * @param lineNum Line number of the file.
+     * @return the pair that was selected, or -1 if no pair.
+     */
     private int setLineColor(int lineNum) {
         int pair = -1;
         if ((lineFlags[lineNum] & LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
@@ -198,18 +222,22 @@ public class Garfield {
     }
 
 
-
+    /** Show the status bar at the bottom of the screen. Shows things like current line number and filename. */
     private void showStatusBar() {
         console.attron(STATUS_BAR_PAIR);
         final int currentLine = selectedLine+lineIndex+1;   //when showing the user, first line is 1, not 0.
         console.move(0,getMaxY());
-        fillLine(0,screenWidth,' ');
+        fillLine(screenWidth,' ');
         console.move(0,getMaxY());
         console.printw("Type '?' for help | Line: "+currentLine+" of "+maxLines+" | File: "+filename+" | W:"+screenWidth+" H:"+screenHeight);
         console.attroff(STATUS_BAR_PAIR);
     }
 
-    private void fillLine(int startx,int width,char ch) {
+    /** Output the specified char, at the specified location.
+     *  @param width Number of characters to display.
+     * @param ch The character to display.
+     */
+    private void fillLine(int width, char ch) {
         for(int i=0; i<width; i++) {
             console.printw(""+ch);
         }
@@ -219,10 +247,12 @@ public class Garfield {
         screenDirty = dirty;
     }
 
+    /** The maximum displayable coordinate. */
     public int getMaxY() {
         return console.getHeight()-1;
     }
 
+    /** Move the cursor up one line, scrolls if we get to the top of the display and there is more file to display. */
     private void cursorUp() {
         selectedLine--;
         if(selectedLine<0) {
@@ -231,6 +261,7 @@ public class Garfield {
         }
     }
 
+    /** Move the cursor down one line, scrolls if we get to the bottom of the display and there is more file to display. */
     private void cursorDown() {
         if(selectedLine+lineIndex+1 < maxLines) {
             selectedLine++;
@@ -241,11 +272,13 @@ public class Garfield {
         }
     }
 
+    /** Move to the first line of the file. */
     void home() {
         lineIndex=0;
         selectedLine=0;
     }
 
+    /** Move to the last line of the file. */
     void end() {
         if(maxLines<getMaxY()) {
             //we don't need to scroll
@@ -256,6 +289,7 @@ public class Garfield {
         }
     }
 
+    /** Toggle the specified lines bookmark flag. */
     private void bookmark(int lineNum) {
         if((lineFlags[lineNum] & LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG)
             lineFlags[lineNum] &= 0xFF-LINE_BOOKMARKED_FLAG;
@@ -263,6 +297,10 @@ public class Garfield {
             lineFlags[lineNum] |= LINE_BOOKMARKED_FLAG;
     }
 
+    /**
+     * Show the next/previous bookmark, depending on the direction specified.
+     * @param dir DIRECTION_FORWARD for next, DIRECTION_REVERSE for previous.
+     */
     int nextBookmark(int dir) {
         int currentLine = currentLineNum();
         if(currentLine+dir < maxLines && currentLine+dir >= 0)
@@ -287,6 +325,10 @@ public class Garfield {
         return -1;
     }
 
+    /**
+     * Scrolls the give filel line number into view. Puts it at the top usually.
+     * @param index file line number to display.
+     */
     void scrollIntoView(int index)
     {
         int height = getMaxY();
@@ -310,12 +352,14 @@ public class Garfield {
         }
     }
 
+    /** Scroll one line up. */
     void scrollUp() {
         lineIndex--;
         if(lineIndex<0)
             lineIndex=0;
     }
 
+    /** Scroll one line down. */
     void scrollDown() {
         if(maxLines >= getMaxY()) {//make sure the file isn't less then a screen full
             lineIndex++;
@@ -325,15 +369,20 @@ public class Garfield {
         }
     }
 
+    /** Returns the current file line number. */
     int currentLineNum() {
         return lineIndex+selectedLine;
     }
 
+    /**
+     * Display a message in the status bar area. Force user to press a key to dismiss the message.
+     * @param msg The message to display.
+     */
     void showMsg(String msg)
     {
         console.move(0,console.getHeight()-1);
         console.attron(MESSAGE_PAIR);
-        fillLine(0,screenWidth,' ');
+        fillLine(screenWidth,' ');
         console.printCenterX(getMaxY(),msg+" - PRESS ENTER");
         console.attroff(MESSAGE_PAIR);
         console.refresh();
