@@ -35,7 +35,7 @@ public class Garfield {
     static final int NORMAL_LINE_PAIR = 2;
     static final int STATUS_BAR_PAIR = 3;
     static final int BOOKMARK_PAIR = 4;
-    static final int CURRENT_LINE_BOOKMARK_PAIR = 5;
+    static final int MESSAGE_PAIR = 5;
 
     static final int KEY_LEFT = '[';
     static final int KEY_RIGHT = ']';
@@ -79,8 +79,8 @@ public class Garfield {
         console.initscr();
         console.initPair(CURRENT_LINE_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_WHITE);
         console.initPair(STATUS_BAR_PAIR,NConsole.COLOR_YELLOW,NConsole.COLOR_BLUE);
-        console.initPair(BOOKMARK_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
-        console.initPair(CURRENT_LINE_BOOKMARK_PAIR,NConsole.COLOR_RED, NConsole.COLOR_WHITE);
+        console.initPair(BOOKMARK_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_CYAN);
+        console.initPair(MESSAGE_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
 //        showSplash();
     }
 
@@ -332,7 +332,10 @@ public class Garfield {
     void showMsg(String msg)
     {
         console.move(0,console.getHeight()-1);
-        console.printw(msg+" - PRESS ENTER");
+        console.attron(MESSAGE_PAIR);
+        fillLine(0,screenWidth,' ');
+        console.printCenterX(getMaxY(),msg+" - PRESS ENTER");
+        console.attroff(MESSAGE_PAIR);
         console.refresh();
         console.getch();
     }
