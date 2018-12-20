@@ -43,6 +43,8 @@ public class Garfield {
     static final int KEY_DOWN = 'j';
     static final int KEY_NPAGE = 'J';
     static final int KEY_PPAGE = 'K';
+    static final int KEY_HOME = '<';
+    static final int KEY_END = '>';
 
     private NConsole console;
     private String filename;
@@ -113,6 +115,9 @@ public class Garfield {
 
                 case KEY_UP:   cursorUp(); break;
                 case KEY_DOWN: cursorDown(); break;
+
+                case KEY_HOME: home(); break;
+                case KEY_END: end(); break;
 
                 case 'B': nextBookmark(DIRECTION_REVERSE); break;
                 case 'b': nextBookmark(DIRECTION_FORWARD); break;
@@ -233,6 +238,21 @@ public class Garfield {
                 selectedLine = getMaxY()-1;
                 scrollDown();
             }
+        }
+    }
+
+    void home() {
+        lineIndex=0;
+        selectedLine=0;
+    }
+
+    void end() {
+        if(maxLines<getMaxY()) {
+            //we don't need to scroll
+            selectedLine = maxLines-1;
+        } else {
+            lineIndex=maxLines-getMaxY();
+            selectedLine=getMaxY()-1;
         }
     }
 
