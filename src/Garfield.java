@@ -28,39 +28,38 @@ import java.util.ArrayList;
  * files easier.
  */
 public class Garfield {
-    static final int DIRECTION_FORWARD = 1;
-    static final int DIRECTION_REVERSE = -1;
-    static final int LINE_FOUND_FLAG=2;
-    static final int LINE_BOOKMARKED_FLAG=4;
+    private static final int DIRECTION_FORWARD = 1;
+    private static final int DIRECTION_REVERSE = -1;
+    private static final int LINE_FOUND_FLAG=2;
+    private static final int LINE_BOOKMARKED_FLAG=4;
 
-    static final int CURRENT_LINE_PAIR = 1;
-    static final int NORMAL_LINE_PAIR = 2;
-    static final int STATUS_BAR_PAIR = 3;
-    static final int BOOKMARK_PAIR = 4;
-    static final int MESSAGE_PAIR = 5;
+    private static final int CURRENT_LINE_PAIR = 1;
+    private static final int NORMAL_LINE_PAIR = 2;
+    private static final int STATUS_BAR_PAIR = 3;
+    private static final int BOOKMARK_PAIR = 4;
+    private static final int MESSAGE_PAIR = 5;
 
-    static final int KEY_LEFT = '[';
-    static final int KEY_RIGHT = ']';
-    static final int KEY_UP = 'k';
-    static final int KEY_DOWN = 'j';
-    static final int KEY_NPAGE = 'J';
-    static final int KEY_PPAGE = 'K';
-    static final int KEY_HOME = '<';
-    static final int KEY_END = '>';
+    private static final int KEY_LEFT = '[';
+    private static final int KEY_RIGHT = ']';
+    private static final int KEY_UP = 'k';
+    private static final int KEY_DOWN = 'j';
+    private static final int KEY_NPAGE = 'J';
+    private static final int KEY_PPAGE = 'K';
+    private static final int KEY_HOME = '<';
+    private static final int KEY_END = '>';
 
     private NConsole console;
     private String filename;
     private boolean running = true;
-    private ArrayList<String> fileContents = new ArrayList<String>();
+    private ArrayList<String> fileContents = new ArrayList<>();
     private int[] lineFlags;
-    private boolean screenDirty = true;
     private int selectedLine;
     private int maxLines;
     private int lineIndex;
     private int screenHeight,screenWidth;
 
 
-    public static void usage() {
+    private static void usage() {
         System.out.println("Garfield Log Viewer");
         System.exit(1);
     }
@@ -98,6 +97,7 @@ public class Garfield {
     }
 
     /** Our main loop. Displays everything on the screen, including the file and status bar. */
+    @SuppressWarnings("WeakerAccess")
     public void view() {
         console.clear();
         screenWidth = console.getWidth();
@@ -136,6 +136,7 @@ public class Garfield {
     }
 
     /** Load the file entirely into memory. Note that really large files might not be a good idea. */
+    @SuppressWarnings("WeakerAccess")
     public void loadFile() throws IOException {
         fileContents.clear();
         selectedLine = 0;  //top of the screen
@@ -241,10 +242,6 @@ public class Garfield {
         for(int i=0; i<width; i++) {
             console.printw(""+ch);
         }
-    }
-
-    public void setDirty(boolean dirty) {
-        screenDirty = dirty;
     }
 
     /** The maximum displayable coordinate. */
