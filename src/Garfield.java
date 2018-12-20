@@ -17,6 +17,7 @@
  * ******************************************************************************/
 
 import com.axorion.NConsole;
+import org.omg.CosNaming.NamingContextOperations;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -24,14 +25,30 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class Garfield {
-    static int CURRENT_LINE = 1;
-    static int NORMAL_LINE = 2;
-    static int STATUS_BAR = 3;
+    static final int DIRECTION_FORWARD = 1;
+    static final int DIRECTION_REVERSE = -1;
+    static final int LINE_SELECTED_FLAG=1;
+    static final int LINE_FOUND_FLAG=2;
+    static final int LINE_BOOKMARKED_FLAG=4;
+
+    static final int CURRENT_LINE_PAIR = 1;
+    static final int NORMAL_LINE_PAIR = 2;
+    static final int STATUS_BAR_PAIR = 3;
+    static final int BOOKMARK_PAIR = 4;
+    static final int CURRENT_LINE_BOOKMARK_PAIR = 5;
+
+    static final int KEY_LEFT = '[';
+    static final int KEY_RIGHT = ']';
+    static final int KEY_UP = 'k';
+    static final int KEY_DOWN = 'j';
+    static final int KEY_NPAGE = 'J';
+    static final int KEY_PPAGE = 'K';
 
     private NConsole console;
     private String filename;
     private boolean running = true;
     private ArrayList<String> fileContents = new ArrayList<String>();
+    private int[] lineFlags;
     private boolean screenDirty = true;
     private int selectedLine;
     private int maxLines;
@@ -58,8 +75,10 @@ public class Garfield {
         this.filename = filename;
         console = new NConsole();
         console.initscr();
-        console.initPair(CURRENT_LINE,NConsole.COLOR_BLACK,NConsole.COLOR_WHITE);
-        console.initPair(STATUS_BAR,NConsole.COLOR_YELLOW,NConsole.COLOR_BLUE);
+        console.initPair(CURRENT_LINE_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_WHITE);
+        console.initPair(STATUS_BAR_PAIR,NConsole.COLOR_YELLOW,NConsole.COLOR_BLUE);
+        console.initPair(BOOKMARK_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
+        console.initPair(CURRENT_LINE_BOOKMARK_PAIR,NConsole.COLOR_RED, NConsole.COLOR_WHITE);
 //        showSplash();
     }
 
@@ -83,19 +102,21 @@ public class Garfield {
 
             showFile();
             showStatusBar();
+            console.move(screenWidth-1,selectedLine);
+            console.refresh();
 
 
             int ch = console.getch();
-            if (ch == 'q' || ch == 'Q') {
-                running = false;
-            } else if (ch == 'j') { //27 && console.getch() == 91 && console.getch() == 65) {
-                cursorDown();   //down arrow
-            } else if (ch == 'k') { //k'k27 && console.getch() == 91 && console.getch() == 66) {
-                cursorUp();     //up arrow
-            } else if(ch == 'J') {
-                scrollDown();
-            } else if(ch == 'K') {
-                scrollUp();
+            switch(ch) {
+                case 'q': running = false; break;
+                case 'Q': running = false; break;
+
+                case KEY_UP:   cursorUp(); break;
+                case KEY_DOWN: cursorDown(); break;
+
+                case 'B': nextBookmark(DIRECTION_REVERSE); break;
+                case 'b': nextBookmark(DIRECTION_FORWARD); break;
+                case 'm': bookmark(currentLineNum()); break;
             }
         }
         console.endwin();
@@ -113,6 +134,7 @@ public class Garfield {
             fileContents.add(line);
         }
         maxLines = fileContents.size();
+        lineFlags = new int[maxLines];
     }
 
     private void showFile() {
@@ -122,7 +144,7 @@ public class Garfield {
         int maxy = getMaxY();
 
         for(int i=lineIndex,y=0; i<maxLines && y<maxy; i++,y++) {
-            if(i==lineIndex+selectedLine)
+            if(i==currentLineNum())
                 showLine(i,true,0,y,maxx);
             else
                 showLine(i,false,0,y,maxx);
@@ -136,25 +158,50 @@ public class Garfield {
         }
 
         console.move(x,y);
+        int pair = -1;      //line color pair
         if(selected) {
-            console.attron(CURRENT_LINE);
+            console.attron(CURRENT_LINE_PAIR);
             console.printw(row);
             fillLine(row.length(),maxWidth-row.length()-1,' ');
-            console.attroff(CURRENT_LINE);
+            console.attroff(CURRENT_LINE_PAIR);
+
+            if(lineFlags[lineNum] != 0) {
+                //show first char as flag color
+                console.move(x,y);
+                pair = setLineColor(lineNum);
+                fillLine(0,1,' ');
+                console.attroff(pair);
+            }
         } else {
+            pair = setLineColor(lineNum);
             console.printw(row);
             fillLine(row.length(),maxWidth-row.length()-1,' ');
+            console.attroff(pair);
         }
+
     }
 
+    private int setLineColor(int lineNum) {
+        int pair = -1;
+        if ((lineFlags[lineNum] & LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
+            pair = LINE_BOOKMARKED_FLAG;
+        }
+        if(pair != -1) {
+            console.attron(pair);
+        }
+        return pair;
+    }
+
+
+
     private void showStatusBar() {
-        console.attron(STATUS_BAR);
+        console.attron(STATUS_BAR_PAIR);
         final int currentLine = selectedLine+lineIndex+1;   //when showing the user, first line is 1, not 0.
         console.move(0,getMaxY());
         fillLine(0,screenWidth,' ');
         console.move(0,getMaxY());
-        console.printw("Type 'h' for help | Line: "+currentLine+" of "+maxLines+" | File: "+filename+" | W:"+screenWidth+" H:"+screenHeight);
-        console.attroff(STATUS_BAR);
+        console.printw("Type '?' for help | Line: "+currentLine+" of "+maxLines+" | File: "+filename+" | W:"+screenWidth+" H:"+screenHeight);
+        console.attroff(STATUS_BAR_PAIR);
     }
 
     private void fillLine(int startx,int width,char ch) {
@@ -189,6 +236,60 @@ public class Garfield {
         }
     }
 
+    private void bookmark(int lineNum) {
+        if((lineFlags[lineNum] & LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG)
+            lineFlags[lineNum] &= 0xFF-LINE_BOOKMARKED_FLAG;
+        else
+            lineFlags[lineNum] |= LINE_BOOKMARKED_FLAG;
+    }
+
+    int nextBookmark(int dir) {
+        int currentLine = currentLineNum();
+        if(currentLine+dir < maxLines && currentLine+dir >= 0)
+            currentLine+=dir;
+
+        if(DIRECTION_FORWARD==dir) {
+            for(int i=currentLine; i<maxLines; i++) {
+                if((lineFlags[i]&LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
+                    scrollIntoView(i);
+                    return i;
+                }
+            }
+        } else {
+            for(int i=currentLine; i>=0; i--) {
+                if((lineFlags[i]&LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
+                    scrollIntoView(i);
+                    return i;
+                }
+            }
+        }
+        showMsg("No more bookmarks found");
+        return -1;
+    }
+
+    void scrollIntoView(int index)
+    {
+        int height = getMaxY();
+        if(index >= lineIndex && index<=lineIndex+height)
+        {
+            //the found item is already visible
+            selectedLine = index-lineIndex;
+        }
+        else
+        {
+            lineIndex = index;
+            if(lineIndex>=maxLines-height)
+            {
+                selectedLine = index-(maxLines-height);
+                lineIndex = maxLines-height;
+            }
+            else
+            {
+                selectedLine=0;
+            }
+        }
+    }
+
     void scrollUp() {
         lineIndex--;
         if(lineIndex<0)
@@ -202,5 +303,17 @@ public class Garfield {
                 lineIndex = maxLines - getMaxY();
             }
         }
+    }
+
+    int currentLineNum() {
+        return lineIndex+selectedLine;
+    }
+
+    void showMsg(String msg)
+    {
+        console.move(0,console.getHeight()-1);
+        console.printw(msg+" - PRESS ENTER");
+        console.refresh();
+        console.getch();
     }
 }
