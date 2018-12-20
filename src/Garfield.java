@@ -34,10 +34,9 @@ public class Garfield {
     private static final int LINE_BOOKMARKED_FLAG=4;
 
     private static final int CURRENT_LINE_PAIR = 1;
-    private static final int NORMAL_LINE_PAIR = 2;
-    private static final int STATUS_BAR_PAIR = 3;
-    private static final int BOOKMARK_PAIR = 4;
-    private static final int MESSAGE_PAIR = 5;
+    private static final int STATUS_BAR_PAIR = 2;
+    private static final int BOOKMARK_PAIR = 3;
+    private static final int MESSAGE_PAIR = 4;
 
     private static final int KEY_LEFT = '[';
     private static final int KEY_RIGHT = ']';
@@ -48,10 +47,10 @@ public class Garfield {
     private static final int KEY_HOME = '<';
     private static final int KEY_END = '>';
 
-    private NConsole console;
-    private String filename;
+    private final NConsole console;
+    private final String filename;
     private boolean running = true;
-    private ArrayList<String> fileContents = new ArrayList<>();
+    private final ArrayList<String> fileContents = new ArrayList<>();
     private int[] lineFlags;
     private int selectedLine;
     private int maxLines;
@@ -108,7 +107,6 @@ public class Garfield {
                 screenHeight = console.getHeight();
                 console.clear();
             }
-            final int maxy = getMaxY();
 
             showFile();
             showStatusBar();
@@ -126,6 +124,9 @@ public class Garfield {
 
                 case KEY_HOME: home(); break;
                 case KEY_END: end(); break;
+
+                case KEY_NPAGE: pageDown(); break;
+                case KEY_PPAGE: pageUp(); break;
 
                 case 'B': nextBookmark(DIRECTION_REVERSE); break;
                 case 'b': nextBookmark(DIRECTION_FORWARD); break;
@@ -175,14 +176,15 @@ public class Garfield {
      * @param y Y screen position to display the line.
      * @param maxWidth maximum width to of the line, won't print more then this number of characers.
      */
-    private void showLine(int lineNum,boolean selected,int x,int y,int maxWidth) {
+    @SuppressWarnings("SameParameterValue")
+    private void showLine(int lineNum, boolean selected, int x, int y, int maxWidth) {
         String row = fileContents.get(lineNum);
         if(row.length() > maxWidth) {
             row = row.substring(0,maxWidth);
         }
 
         console.move(x,y);
-        int pair = -1;      //line color pair
+        int pair;      //line color pair
         if(selected) {
             console.attron(CURRENT_LINE_PAIR);
             console.printw(row);
@@ -238,6 +240,7 @@ public class Garfield {
      *  @param width Number of characters to display.
      * @param ch The character to display.
      */
+    @SuppressWarnings("SameParameterValue")
     private void fillLine(int width, char ch) {
         for(int i=0; i<width; i++) {
             console.printw(""+ch);
@@ -286,6 +289,26 @@ public class Garfield {
         }
     }
 
+    /** Show the previous page of text. First line will be selected if needed. */
+    void pageUp() {
+        final int screenHeight = getMaxY();
+        lineIndex-=screenHeight-1;
+        if(lineIndex<0) {
+            lineIndex=0;
+            selectedLine=0;
+        }
+    }
+
+    /** Show the next page of text. Selected line will move to the end of the file if needed. */
+    void pageDown() {
+        final int screenHeight = getMaxY();
+        lineIndex+=screenHeight-1;
+        if(lineIndex>maxLines-screenHeight) {
+            lineIndex=maxLines-screenHeight;
+            selectedLine=screenHeight-1;
+        }
+    }
+
     /** Toggle the specified lines bookmark flag. */
     private void bookmark(int lineNum) {
         if((lineFlags[lineNum] & LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG)
@@ -298,7 +321,7 @@ public class Garfield {
      * Show the next/previous bookmark, depending on the direction specified.
      * @param dir DIRECTION_FORWARD for next, DIRECTION_REVERSE for previous.
      */
-    int nextBookmark(int dir) {
+    void nextBookmark(int dir) {
         int currentLine = currentLineNum();
         if(currentLine+dir < maxLines && currentLine+dir >= 0)
             currentLine+=dir;
@@ -307,19 +330,18 @@ public class Garfield {
             for(int i=currentLine; i<maxLines; i++) {
                 if((lineFlags[i]&LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
                     scrollIntoView(i);
-                    return i;
+                    return;
                 }
             }
         } else {
             for(int i=currentLine; i>=0; i--) {
                 if((lineFlags[i]&LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
                     scrollIntoView(i);
-                    return i;
+                    return;
                 }
             }
         }
         showMsg("No more bookmarks found");
-        return -1;
     }
 
     /**
