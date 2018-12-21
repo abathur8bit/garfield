@@ -56,6 +56,8 @@ public class Garfield {
     private int maxLines;
     private int lineIndex;
     private int screenHeight,screenWidth;
+    private boolean showLineNumbers;
+    private int lineNumDigitCount;
 
 
     private static void usage() {
@@ -131,6 +133,8 @@ public class Garfield {
                 case 'B': nextBookmark(DIRECTION_REVERSE); break;
                 case 'b': nextBookmark(DIRECTION_FORWARD); break;
                 case 'm': bookmark(currentLineNum()); break;
+
+                case 'o': toggleShowLineNumbers(); break;
             }
         }
         console.endwin();
@@ -150,6 +154,7 @@ public class Garfield {
         }
         maxLines = fileContents.size();
         lineFlags = new int[maxLines];
+        lineNumDigitCount = Integer.toString(maxLines).length();
     }
 
     /** Displays the lines of the file. */
@@ -168,7 +173,11 @@ public class Garfield {
     }
 
     /**
-     * Show the specified line as either selected or not.
+     * Show the specified line as either selected or not. If line numbers are enabled, the line is formatted as
+     *
+     *     ###: abc
+     *
+     * Where `###` is the line number, and `abc` is the string.
      *
      * @param lineNum The line of the file to show.
      * @param selected true to show as a selected line, false to show as normal.
@@ -178,30 +187,35 @@ public class Garfield {
      */
     @SuppressWarnings("SameParameterValue")
     private void showLine(int lineNum, boolean selected, int x, int y, int maxWidth) {
-        String row = fileContents.get(lineNum);
+        String row;
+        if(showLineNumbers) {
+            String format = "%"+lineNumDigitCount+"d: %-"+(maxWidth-lineNumDigitCount-2)+"s";
+            row = String.format(format,lineNum+1, fileContents.get(lineNum));
+        } else {
+            row = fileContents.get(lineNum);
+        }
         if(row.length() > maxWidth) {
             row = row.substring(0,maxWidth);
         }
-
         console.move(x,y);
         int pair;      //line color pair
         if(selected) {
             console.attron(CURRENT_LINE_PAIR);
             console.printw(row);
-            fillLine(maxWidth-row.length()-1,' ');
+            fillLine(maxWidth-row.length(),' ');
             console.attroff(CURRENT_LINE_PAIR);
 
             if(lineFlags[lineNum] != 0) {
                 //show first char as flag color
                 console.move(x,y);
                 pair = setLineColor(lineNum);
-                fillLine(1,' ');
+                fillLine(1, ' ');
                 console.attroff(pair);
             }
         } else {
             pair = setLineColor(lineNum);
             console.printw(row);
-            fillLine(maxWidth-row.length()-1,' ');
+            fillLine(maxWidth-row.length(),' ');
             console.attroff(pair);
         }
 
@@ -406,5 +420,10 @@ public class Garfield {
         console.attroff(MESSAGE_PAIR);
         console.refresh();
         console.getch();
+    }
+
+    /** Toggle if we show line numbers. */
+    void toggleShowLineNumbers() {
+        showLineNumbers = !showLineNumbers;
     }
 }
