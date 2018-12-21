@@ -19,9 +19,12 @@
 import com.axorion.NConsole;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * File viewer command line application. Like less, but you can do a few other things to make viewing and searching
@@ -49,15 +52,18 @@ public class Garfield {
 
     private final NConsole console;
     private final String filename;
+    private final File currentFile;
     private boolean running = true;
     private final ArrayList<String> fileContents = new ArrayList<>();
-    private int[] lineFlags;
+    private final LineFlags lineFlags = new LineFlags();
     private int selectedLine;
     private int maxLines;
+    private long fileSizeBytes;
     private int lineIndex;
     private int screenHeight,screenWidth;
     private boolean showLineNumbers;
     private int lineNumDigitCount;
+    private Date lastLoaded;
 
 
     private static void usage() {
@@ -82,6 +88,7 @@ public class Garfield {
 
     public Garfield(String filename) {
         this.filename = filename;
+        this.currentFile = new File(filename);
         console = new NConsole();
         console.initscr();
         console.initPair(CURRENT_LINE_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_WHITE);
@@ -99,7 +106,7 @@ public class Garfield {
 
     /** Our main loop. Displays everything on the screen, including the file and status bar. */
     @SuppressWarnings("WeakerAccess")
-    public void view() {
+    public void view() throws IOException {
         console.clear();
         screenWidth = console.getWidth();
         screenHeight = console.getHeight();
@@ -115,8 +122,19 @@ public class Garfield {
             console.move(screenWidth-1,selectedLine);
             console.refresh();
 
-
             int ch = console.getch();
+            if(currentFile.length() != fileSizeBytes) {
+                if(currentFile.length() < fileSizeBytes) {
+                    //if the file has gotten smaller, then the file has been reset
+                    loadFile();
+                    lineFlags.clear();
+                    selectedLine = 0;
+                    lineIndex = 0;
+                    console.clear();
+                } else {
+                    loadFile();
+                }
+            }
             switch(ch) {
                 case 'q': running = false; break;
                 case 'Q': running = false; break;
@@ -144,16 +162,16 @@ public class Garfield {
     @SuppressWarnings("WeakerAccess")
     public void loadFile() throws IOException {
         fileContents.clear();
-        selectedLine = 0;  //top of the screen
-        lineIndex = 0;    //first line of the file
 
-        BufferedReader in = new BufferedReader(new FileReader(filename));
+        lastLoaded = new Date();
+        fileSizeBytes = currentFile.length();
+        BufferedReader in = new BufferedReader(new FileReader(currentFile));
         String line;
         while((line = in.readLine()) != null) {
             fileContents.add(line);
         }
+        in.close();
         maxLines = fileContents.size();
-        lineFlags = new int[maxLines];
         lineNumDigitCount = Integer.toString(maxLines).length();
     }
 
@@ -166,9 +184,9 @@ public class Garfield {
 
         for(int i=lineIndex,y=0; i<maxLines && y<maxy; i++,y++) {
             if(i==currentLineNum())
-                showLine(i,true,0,y,maxx);
+                showLine(i,true,y,maxx);
             else
-                showLine(i,false,0,y,maxx);
+                showLine(i,false,y,maxx);
         }
     }
 
@@ -178,34 +196,32 @@ public class Garfield {
      *     ###: abc
      *
      * Where `###` is the line number, and `abc` is the string.
-     *
-     * @param lineNum The line of the file to show.
+     *  @param lineNum The line of the file to show.
      * @param selected true to show as a selected line, false to show as normal.
-     * @param x X screen position to display the line.
      * @param y Y screen position to display the line.
-     * @param maxWidth maximum width to of the line, won't print more then this number of characers.
+     * @param width maximum width to of the line, won't print more then this number of characers.
      */
-    @SuppressWarnings("SameParameterValue")
-    private void showLine(int lineNum, boolean selected, int x, int y, int maxWidth) {
+    private void showLine(int lineNum, boolean selected, int y, int width) {
+        final int x=0;
         String row;
         if(showLineNumbers) {
-            String format = "%"+lineNumDigitCount+"d: %-"+(maxWidth-lineNumDigitCount-2)+"s";
+            String format = "%"+lineNumDigitCount+"d: %-"+(width-lineNumDigitCount-2)+"s";
             row = String.format(format,lineNum+1, fileContents.get(lineNum));
         } else {
             row = fileContents.get(lineNum);
         }
-        if(row.length() > maxWidth) {
-            row = row.substring(0,maxWidth);
+        if(row.length() > width) {
+            row = row.substring(0,width);
         }
         console.move(x,y);
         int pair;      //line color pair
         if(selected) {
             console.attron(CURRENT_LINE_PAIR);
             console.printw(row);
-            fillLine(maxWidth-row.length(),' ');
+            fillLine(width-row.length(),' ');
             console.attroff(CURRENT_LINE_PAIR);
 
-            if(lineFlags[lineNum] != 0) {
+            if(lineFlags.get(lineNum) != 0) {
                 //show first char as flag color
                 console.move(x,y);
                 pair = setLineColor(lineNum);
@@ -215,7 +231,7 @@ public class Garfield {
         } else {
             pair = setLineColor(lineNum);
             console.printw(row);
-            fillLine(maxWidth-row.length(),' ');
+            fillLine(width-row.length(),' ');
             console.attroff(pair);
         }
 
@@ -229,7 +245,7 @@ public class Garfield {
      */
     private int setLineColor(int lineNum) {
         int pair = -1;
-        if ((lineFlags[lineNum] & LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
+        if (lineFlags.isSet(lineNum,LINE_BOOKMARKED_FLAG)) {
             pair = LINE_BOOKMARKED_FLAG;
         }
         if(pair != -1) {
@@ -246,7 +262,7 @@ public class Garfield {
         console.move(0,getMaxY());
         fillLine(screenWidth,' ');
         console.move(0,getMaxY());
-        console.printw("Type '?' for help | Line: "+currentLine+" of "+maxLines+" | File: "+filename+" | W:"+screenWidth+" H:"+screenHeight);
+        console.printw("Type '?' for help | Line: "+currentLine+" of "+maxLines+" | File: "+filename+" | Updated: "+lastLoaded+" | W:"+screenWidth+" H:"+screenHeight);
         console.attroff(STATUS_BAR_PAIR);
     }
 
@@ -325,10 +341,11 @@ public class Garfield {
 
     /** Toggle the specified lines bookmark flag. */
     private void bookmark(int lineNum) {
-        if((lineFlags[lineNum] & LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG)
-            lineFlags[lineNum] &= 0xFF-LINE_BOOKMARKED_FLAG;
-        else
-            lineFlags[lineNum] |= LINE_BOOKMARKED_FLAG;
+        if(lineFlags.isSet(lineNum,LINE_BOOKMARKED_FLAG)) {
+            lineFlags.reset(lineNum,LINE_BOOKMARKED_FLAG);
+        } else {
+            lineFlags.set(lineNum,LINE_BOOKMARKED_FLAG);
+        }
     }
 
     /**
@@ -342,14 +359,14 @@ public class Garfield {
 
         if(DIRECTION_FORWARD==dir) {
             for(int i=currentLine; i<maxLines; i++) {
-                if((lineFlags[i]&LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
+                if(lineFlags.isSet(i,LINE_BOOKMARKED_FLAG)) {
                     scrollIntoView(i);
                     return;
                 }
             }
         } else {
             for(int i=currentLine; i>=0; i--) {
-                if((lineFlags[i]&LINE_BOOKMARKED_FLAG) == LINE_BOOKMARKED_FLAG) {
+                if(lineFlags.isSet(i,LINE_BOOKMARKED_FLAG)) {
                     scrollIntoView(i);
                     return;
                 }
