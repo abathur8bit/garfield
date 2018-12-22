@@ -118,6 +118,7 @@ public class Garfield {
     /** Our main loop. Displays everything on the screen, including the file and status bar. */
     @SuppressWarnings("WeakerAccess")
     public void view() throws IOException {
+        console.timeout(TIMEOUT_DELAY);
         console.updateSize();
         screenWidth = console.getWidth();
         screenHeight = console.getHeight();
@@ -132,6 +133,7 @@ public class Garfield {
                 screenHeight = console.getHeight();
                 console.clear();
                 if(following) {
+                    //make sure the last line is selected and in view
                     end();
                 }
             }
@@ -489,10 +491,8 @@ public class Garfield {
     void toggleFollowMode() {
         if(following) {
             following = false;
-            console.timeout(TIMEOUT_BLOCK);
         } else {
             following = true;
-            console.timeout(TIMEOUT_DELAY);
             end();
         }
     }
