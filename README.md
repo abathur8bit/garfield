@@ -1,7 +1,73 @@
 # Garfield the log viewer
-Garfield, or garf for short, is a console based log viewer written in Java. It utilizes NConsole for console i/o. Under *nix, this means it uses ncursors. Under windows it uses native windows console commands.
+Garfield, or garf for short, is a console based log and text file viewer. Its purpose is to provide a rich set of viewing, searching, and filtering features that are missing in `tail` and `less`. Features like bookmarking, filtering, and intelligently highlighting log blocks make it easier to work with large log files with lots of exception traces. 
 
-**Note** that Windows support isn't in place yet. Plan is to use the same methods as on *nix systems. 
+Why not just use something like splunk? Most of the log files I look at are on a *nix box, and the only access is through an ssh session. Using less and tail is frustrating, as it's hard to see where a log block starts and ends. It's also hard to look at multiple places in the file, or keep track of something you were previously looking at.
+
+So bookmarking lets you jump around the file, filtering lets you toss out crap you are not interested in, all while watching the file in realtime. 
+
+Garifled is written in Java. Since Java doesn't provide the ability to monitor the keyboard for individual keypresses, and can't control a terminal in *nix or Windows, Garfield utilizes [NConsole] for it's low level console i/o. Under Linix and macOS, this means it uses ncursors. Under windows it uses native windows console API.
+
+**Note:** Windows support isn't in place yet. Plan is to use the same methods as on *nix systems. 
+
+# Usage
+$ garf filename
+
+Filename is the text file you want to view.
+
+
+# Keymap
+Keys are meant to be a little like `less`. 
+
+| Key   | Action                                    |
+|-------|----                                       |
+| q     | Quit                                      |
+| k     | Up                                        |
+| j     | Down                                      |
+| f     | Follow                                    |
+| r     | Refresh                                   |
+| m     | Set bookmark                              |
+| b     | Next bookmark                             |
+| B     | Prev bookmark                             |
+| o     | Toggle showing line numbers               |
+
+Not yet implemented:
+
+| Key   | Action                                    |
+|-------|---                                        |
+| /     | Search                                    |
+| ?     | Regular expression search                 |
+| n     | Search next                               |
+| N     | Search previous                           |
+| &     | Display only matching lines               |
+
+
+
+
+# Features explained
+Explanation of features.
+
+## Follow
+Follow the file. Best for monitoring files in real time. Any changes to the file will be shown, and the bottom of the file is always in view. 
+
+You can set **bookmarks** while in follow mode.
+
+Like `tail -f` or `less +F`.
+
+
+## Refresh
+Reloads the file from disk. Position in file, and any bookmarks are preserved.
+
+
+# TODO
+- Search
+- Regex search
+- Filter (&) to display only matching lines
+- Multiple file support
+
+## Multiple file support
+Ability to show and monitor multiple files. Multiple files will be shown as a split screen. Initial versions will handle window resizing automatically, but later revs will allow the user to control the window size.
+
+When **follow** mode is active, all windows are set to follow mode. Later revs will allow the user to choose to activate only active file, or optionally all files.
 
 #JNI
 See [nconsole] for Java Native Interface (JNI) library.
@@ -14,90 +80,9 @@ cp ../nconsole/*.so lib
 javac -d classes -cp lib/nconsole.jar src/*
 java -Djava.library.path=../nconsole -cp lib/nconsole.jar:classes Garfield README.md 
 
-# File monitoring
-See /Volumes/brood/lee/workspace/logviewer/src/logviewer.c
 
-```
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/inotify.h>
-#include <limits.h>
- 
-#define MAX_EVENTS 1024 /*Max. number of events to process at one go*/
-#define LEN_NAME 16 /*Assuming that the length of the filename won't exceed 16 bytes*/
-#define EVENT_SIZE  ( sizeof (struct inotify_event) ) /*size of one event*/
-#define BUF_LEN     ( MAX_EVENTS * ( EVENT_SIZE + LEN_NAME )) /*buffer to store the data of events*/
- 
-int main( int argc, char **argv ) 
-{
-  int length, i = 0, wd;
-  int fd;
-  char buffer[BUF_LEN];
- 
-  /* Initialize Inotify*/
-  fd = inotify_init();
-  if ( fd < 0 ) {
-    perror( "Couldn't initialize inotify");
-  }
- 
-  /* add watch to starting directory */
-  wd = inotify_add_watch(fd, argv[1], IN_CREATE | IN_MODIFY | IN_DELETE); 
- 
-  if (wd == -1)
-    {
-      printf("Couldn't add watch to %s\n",argv[1]);
-    }
-  else
-    {
-      printf("Watching:: %s\n",argv[1]);
-    }
- 
-  /* do it forever*/
-  while(1)
-    {
-      i = 0;
-      length = read( fd, buffer, BUF_LEN );  
- 
-      if ( length < 0 ) {
-        perror( "read" );
-      }  
- 
-      while ( i < length ) {
-        struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
-        if ( event->len ) {
-          if ( event->mask & IN_CREATE) {
-            if (event->mask & IN_ISDIR)
-              printf( "The directory %s was Created.\n", event->name );       
-            else
-              printf( "The file %s was Created with WD %d\n", event->name, event->wd );       
-          }
-           
-          if ( event->mask & IN_MODIFY) {
-            if (event->mask & IN_ISDIR)
-              printf( "The directory %s was modified.\n", event->name );       
-            else
-              printf( "The file %s was modified with WD %d\n", event->name, event->wd );       
-          }
-           
-          if ( event->mask & IN_DELETE) {
-            if (event->mask & IN_ISDIR)
-              printf( "The directory %s was deleted.\n", event->name );       
-            else
-              printf( "The file %s was deleted with WD %d\n", event->name, event->wd );       
-          }  
- 
- 
-          i += EVENT_SIZE + event->len;
-        }
-      }
-    }
- 
-  /* Clean up*/
-  inotify_rm_watch( fd, wd );
-}
-```
+
+
 
 
 [garfield]: https://github.com/abathur8bit/garfield
