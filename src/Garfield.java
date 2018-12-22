@@ -24,7 +24,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 
 /**
  * File viewer command line application. Like less, but you can do a few other things to make viewing and searching
@@ -66,10 +65,10 @@ public class Garfield {
     private boolean running = true;
     private final ArrayList<String> fileContents = new ArrayList<>();
     private final LineFlags lineFlags = new LineFlags();
-    private int selectedLine;
-    private int maxLines;
+    private int lineScreen;
+    private int linesInFile;
     private long fileSizeBytes;
-    private int lineIndex;
+    private int lineOffset;
     private int screenHeight,screenWidth;
     private boolean showLineNumbers;
     private int lineNumDigitCount;
@@ -119,10 +118,15 @@ public class Garfield {
     /** Our main loop. Displays everything on the screen, including the file and status bar. */
     @SuppressWarnings("WeakerAccess")
     public void view() throws IOException {
-        console.clear();
+        console.updateSize();
         screenWidth = console.getWidth();
         screenHeight = console.getHeight();
+        console.clear();
         while(running) {
+            updateDisplay();
+
+            int ch = console.getch();
+
             if(console.updateSize()) {
                 screenWidth = console.getWidth();
                 screenHeight = console.getHeight();
@@ -132,19 +136,13 @@ public class Garfield {
                 }
             }
 
-            showFile();
-            showStatusBar();
-            console.move(screenWidth-1,selectedLine);
-            console.refresh();
-
-            int ch = console.getch();
-            if(currentFile.length() != fileSizeBytes) {
+            if(following && currentFile.length() != fileSizeBytes) {
                 if(currentFile.length() < fileSizeBytes) {
                     //if the file has gotten smaller, then the file has been reset
                     loadFile();
                     lineFlags.clear();
-                    selectedLine = 0;
-                    lineIndex = 0;
+                    lineScreen = 0;
+                    lineOffset = 0;
                     console.clear();
                 } else {
                     loadFile();
@@ -166,23 +164,30 @@ public class Garfield {
                 switch(ch) {
                     case KEY_QUIT: running = false; break;
 
-                    case KEY_UP:   cursorUp(); break;
-                    case KEY_DOWN: cursorDown(); break;
-                    case KEY_HOME: home(); break;
-                    case KEY_END: end(); break;
+                    case KEY_UP:    cursorUp(); break;
+                    case KEY_DOWN:  cursorDown(); break;
+                    case KEY_HOME:  home(); break;
+                    case KEY_END:   end(); break;
                     case KEY_NPAGE: pageDown(); break;
                     case KEY_PPAGE: pageUp(); break;
 
                     case KEY_BOOKMARK_PREV: nextBookmark(DIRECTION_REVERSE); break;
                     case KEY_BOOKMARK_NEXT: nextBookmark(DIRECTION_FORWARD); break;
-                    case KEY_BOOKMARK_SET: bookmark(currentLineNum()); break;
+                    case KEY_BOOKMARK_SET:  bookmark(currentLineNum()); break;
 
                     case KEY_SHOW_LINE_NUMBERS: toggleShowLineNumbers(); break;
-                    case KEY_FOLLOW: toggleFollowMode(); break;
+                    case KEY_FOLLOW:            toggleFollowMode(); break;
                 }
             }
         }
         console.endwin();
+    }
+
+    private void updateDisplay() {
+        showFile();
+        showStatusBar();
+        console.move(screenWidth-1,lineScreen);
+        console.refresh();
     }
 
     /** Load the file entirely into memory. Note that really large files might not be a good idea. */
@@ -198,8 +203,8 @@ public class Garfield {
             fileContents.add(line);
         }
         in.close();
-        maxLines = fileContents.size();
-        lineNumDigitCount = Integer.toString(maxLines).length();
+        linesInFile = fileContents.size();
+        lineNumDigitCount = Integer.toString(linesInFile).length();
     }
 
     /** Displays the lines of the file. */
@@ -209,7 +214,7 @@ public class Garfield {
         int maxx = screenWidth;
         int maxy = getMaxY();
 
-        for(int i=lineIndex,y=0; i<maxLines && y<maxy; i++,y++) {
+        for(int i = lineOffset, y = 0; i< linesInFile && y<maxy; i++,y++) {
             if(i==currentLineNum())
                 showLine(i,true,y,maxx);
             else
@@ -289,11 +294,12 @@ public class Garfield {
     /** Show the status bar at the bottom of the screen. Shows things like current line number and filename. */
     private void showStatusBar() {
         console.attron(STATUS_BAR_PAIR);
-        final int currentLine = selectedLine+lineIndex+1;   //when showing the user, first line is 1, not 0.
+        final int currentLine = lineScreen + lineOffset +1;   //when showing the user, first line is 1, not 0.
         console.move(0,getMaxY());
         fillLine(screenWidth,' ');
         console.move(0,getMaxY());
-        console.printw("Type '?' for help | Line: "+currentLine+" of "+maxLines+" | File: "+filename+" | Updated: "+lastLoaded+" | W:"+screenWidth+" H:"+screenHeight);
+//        console.printw("Type '?' for help | Line: "+currentLine+" of "+linesInFile+" | File: "+filename+" | Updated: "+lastLoaded+" | W:"+screenWidth+" H:"+screenHeight);
+        console.printw("Line "+currentLine+" of "+ linesInFile +" | lineOffset "+ lineOffset +" | lineScreen "+ lineScreen +" | W:"+screenWidth+" H:"+screenHeight);
         if(following) {
             console.printw(" | Following");
         }
@@ -318,19 +324,19 @@ public class Garfield {
 
     /** Move the cursor up one line, scrolls if we get to the top of the display and there is more file to display. */
     private void cursorUp() {
-        selectedLine--;
-        if(selectedLine<0) {
+        lineScreen--;
+        if(lineScreen < 0) {
             scrollUp();
-            selectedLine=0;
+            lineScreen = 0;
         }
     }
 
     /** Move the cursor down one line, scrolls if we get to the bottom of the display and there is more file to display. */
     private void cursorDown() {
-        if(selectedLine+lineIndex+1 < maxLines) {
-            selectedLine++;
-            if(selectedLine>=getMaxY()) {
-                selectedLine = getMaxY()-1;
+        if(lineScreen+lineOffset+1 < linesInFile) {
+            lineScreen++;
+            if(lineScreen >= getMaxY()) {
+                lineScreen = getMaxY()-1;
                 scrollDown();
             }
         }
@@ -338,38 +344,40 @@ public class Garfield {
 
     /** Move to the first line of the file. */
     void home() {
-        lineIndex=0;
-        selectedLine=0;
+        lineOffset = 0;
+        lineScreen = 0;
     }
 
     /** Move to the last line of the file. */
     void end() {
-        if(maxLines<getMaxY()) {
+        final int visibleLines = getMaxY()-1;
+        if(linesInFile <= visibleLines) {
             //we don't need to scroll
-            selectedLine = maxLines-1;
+            lineOffset = 0;
+            lineScreen = linesInFile - 1;
         } else {
-            lineIndex=maxLines-getMaxY();
-            selectedLine=getMaxY()-1;
+            lineOffset = linesInFile - visibleLines - 1;
+            lineScreen = getMaxY()-1;
         }
     }
 
     /** Show the previous page of text. First line will be selected if needed. */
     void pageUp() {
         final int screenHeight = getMaxY();
-        lineIndex-=screenHeight-1;
-        if(lineIndex<0) {
-            lineIndex=0;
-            selectedLine=0;
+        lineOffset -=screenHeight-1;
+        if(lineOffset < 0) {
+            lineOffset = 0;
+            lineScreen = 0;
         }
     }
 
     /** Show the next page of text. Selected line will move to the end of the file if needed. */
     void pageDown() {
         final int screenHeight = getMaxY();
-        lineIndex+=screenHeight-1;
-        if(lineIndex>maxLines-screenHeight) {
-            lineIndex=maxLines-screenHeight;
-            selectedLine=screenHeight-1;
+        lineOffset +=screenHeight-1;
+        if(lineOffset > linesInFile -screenHeight) {
+            lineOffset = linesInFile -screenHeight;
+            lineScreen =screenHeight-1;
         }
     }
 
@@ -388,11 +396,11 @@ public class Garfield {
      */
     void nextBookmark(int dir) {
         int currentLine = currentLineNum();
-        if(currentLine+dir < maxLines && currentLine+dir >= 0)
+        if(currentLine+dir < linesInFile && currentLine+dir >= 0)
             currentLine+=dir;
 
         if(DIRECTION_FORWARD==dir) {
-            for(int i=currentLine; i<maxLines; i++) {
+            for(int i = currentLine; i< linesInFile; i++) {
                 if(lineFlags.isSet(i,LINE_BOOKMARKED_FLAG)) {
                     scrollIntoView(i);
                     return;
@@ -416,46 +424,46 @@ public class Garfield {
     void scrollIntoView(int index)
     {
         int height = getMaxY();
-        if(index >= lineIndex && index<=lineIndex+height)
+        if(index >= lineOffset && index<= lineOffset +height)
         {
             //the found item is already visible
-            selectedLine = index-lineIndex;
+            lineScreen = index- lineOffset;
         }
         else
         {
-            lineIndex = index;
-            if(lineIndex>=maxLines-height)
+            lineOffset = index;
+            if(lineOffset >= linesInFile -height)
             {
-                selectedLine = index-(maxLines-height);
-                lineIndex = maxLines-height;
+                lineScreen = index-(linesInFile -height);
+                lineOffset = linesInFile -height;
             }
             else
             {
-                selectedLine=0;
+                lineScreen =0;
             }
         }
     }
 
     /** Scroll one line up. */
     void scrollUp() {
-        lineIndex--;
-        if(lineIndex<0)
-            lineIndex=0;
+        lineOffset--;
+        if(lineOffset <0)
+            lineOffset =0;
     }
 
     /** Scroll one line down. */
     void scrollDown() {
-        if(maxLines >= getMaxY()) {//make sure the file isn't less then a screen full
-            lineIndex++;
-            if(lineIndex>=maxLines-getMaxY()) {
-                lineIndex = maxLines - getMaxY();
+        if(linesInFile >= getMaxY()) {//make sure the file isn't less then a screen full
+            lineOffset++;
+            if(lineOffset >= linesInFile -getMaxY()) {
+                lineOffset = linesInFile - getMaxY();
             }
         }
     }
 
     /** Returns the current file line number. */
     int currentLineNum() {
-        return lineIndex+selectedLine;
+        return lineOffset + lineScreen;
     }
 
     /**
