@@ -53,6 +53,12 @@ public class Garfield {
     private static final int KEY_PPAGE = 'K';
     private static final int KEY_HOME = '<';
     private static final int KEY_END = '>';
+    private static final int KEY_FOLLOW = 'f';
+    private static final int KEY_SHOW_LINE_NUMBERS = 'o';
+    private static final int KEY_BOOKMARK_SET = 'm';
+    private static final int KEY_BOOKMARK_NEXT = 'b';
+    private static final int KEY_BOOKMARK_PREV = 'M';
+    private static final int KEY_QUIT = 'q';
 
     private final NConsole console;
     private final String filename;
@@ -121,6 +127,9 @@ public class Garfield {
                 screenWidth = console.getWidth();
                 screenHeight = console.getHeight();
                 console.clear();
+                if(following) {
+                    end();
+                }
             }
 
             showFile();
@@ -145,35 +154,31 @@ public class Garfield {
                 }
             }
             if(following) {
+                //only keys that will not effect the position of the file are valid
                 switch(ch) {
-                    case 'q': running = false; break;
-                    case 'Q': running = false; break;
-
-                    case 'm': bookmark(currentLineNum()); break;
-                    case 'o': toggleShowLineNumbers(); break;
-                    case 'F': toggleFollowMode(); break;
+                    case KEY_QUIT: running = false; break;
+                    case KEY_BOOKMARK_SET: bookmark(currentLineNum()); break;
+                    case KEY_SHOW_LINE_NUMBERS: toggleShowLineNumbers(); break;
+                    case KEY_FOLLOW: toggleFollowMode(); break;
                 }
             } else {
+                //all keys are valid
                 switch(ch) {
-                    case 'q': running = false; break;
-                    case 'Q': running = false; break;
+                    case KEY_QUIT: running = false; break;
 
                     case KEY_UP:   cursorUp(); break;
                     case KEY_DOWN: cursorDown(); break;
-
                     case KEY_HOME: home(); break;
                     case KEY_END: end(); break;
-
                     case KEY_NPAGE: pageDown(); break;
                     case KEY_PPAGE: pageUp(); break;
 
-                    case 'B': nextBookmark(DIRECTION_REVERSE); break;
-                    case 'b': nextBookmark(DIRECTION_FORWARD); break;
-                    case 'm': bookmark(currentLineNum()); break;
+                    case KEY_BOOKMARK_PREV: nextBookmark(DIRECTION_REVERSE); break;
+                    case KEY_BOOKMARK_NEXT: nextBookmark(DIRECTION_FORWARD); break;
+                    case KEY_BOOKMARK_SET: bookmark(currentLineNum()); break;
 
-                    case 'o': toggleShowLineNumbers(); break;
-
-                    case 'F': toggleFollowMode(); break;
+                    case KEY_SHOW_LINE_NUMBERS: toggleShowLineNumbers(); break;
+                    case KEY_FOLLOW: toggleFollowMode(); break;
                 }
             }
         }
