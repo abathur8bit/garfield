@@ -1,7 +1,5 @@
 import org.junit.jupiter.api.Test;
 
-import javax.sound.sampled.Line;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class LineFlagsTest {
@@ -83,5 +81,22 @@ class LineFlagsTest {
         assertEquals(4,lf.get(1));
         assertTrue(lf.isSet(1,4));  //0100 this flag should be set
         assertFalse(lf.isSet(1,1)); //0001 this flag should NOT be set
+    }
+
+    /** Check reset(int mask) will reset all of the specified bits. */
+    @Test
+    void resetAll() {
+        LineFlags lf = new LineFlags();
+
+        //set
+        lf.set(1,3);    //0011
+        lf.set(2,12);   //1100
+        assertEquals(3,lf.get(1));
+        assertEquals(12,lf.get(2));
+
+        //reset and verify
+        lf.reset(6); //0110
+        assertEquals(1,lf.get(1));
+        assertEquals(8,lf.get(2));
     }
 }

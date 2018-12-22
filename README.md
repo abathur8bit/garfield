@@ -39,7 +39,7 @@ Not yet implemented:
 | n     | Search next                               |
 | N     | Search previous                           |
 | &     | Display only matching lines               |
-
+| g     | Goto specified line                       |
 
 
 
@@ -59,10 +59,14 @@ Reloads the file from disk. Position in file, and any bookmarks are preserved.
 
 
 # TODO
-- Search
-- Regex search
-- Filter (&) to display only matching lines
+- Filter (&) to display only matching lines, will need to show something on the status bar to indicate we are filtering
 - Multiple file support
+- Search shows the matching line *and* highlight the matching text
+- Goto line
+- Scrolling left/right
+- Word wrap
+- Remember bookmarks in files viewed
+
 
 ## Multiple file support
 Ability to show and monitor multiple files. Multiple files will be shown as a split screen. Initial versions will handle window resizing automatically, but later revs will allow the user to control the window size.
