@@ -31,6 +31,9 @@ import java.util.HashMap;
  * files easier.
  */
 public class Garfield {
+    private static final int TIMEOUT_DELAY = 100;
+    private static final int TIMEOUT_BLOCK = -1;
+
     private static final int DIRECTION_FORWARD = 1;
     private static final int DIRECTION_REVERSE = -1;
     private static final int LINE_FOUND_FLAG=2;
@@ -40,6 +43,7 @@ public class Garfield {
     private static final int STATUS_BAR_PAIR = 2;
     private static final int BOOKMARK_PAIR = 3;
     private static final int MESSAGE_PAIR = 4;
+    private static final int FOLLOW_PAIR = 5;
 
     private static final int KEY_LEFT = '[';
     private static final int KEY_RIGHT = ']';
@@ -64,6 +68,7 @@ public class Garfield {
     private boolean showLineNumbers;
     private int lineNumDigitCount;
     private Date lastLoaded;
+    private boolean following = false;
 
 
     private static void usage() {
@@ -95,6 +100,7 @@ public class Garfield {
         console.initPair(STATUS_BAR_PAIR,NConsole.COLOR_YELLOW,NConsole.COLOR_BLUE);
         console.initPair(BOOKMARK_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_CYAN);
         console.initPair(MESSAGE_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
+        console.initPair(FOLLOW_PAIR,NConsole.COLOR_BLACK, NConsole.COLOR_CYAN);
 //        showSplash();
     }
 
@@ -133,26 +139,42 @@ public class Garfield {
                     console.clear();
                 } else {
                     loadFile();
+                    if(following) {
+                        end();
+                    }
                 }
             }
-            switch(ch) {
-                case 'q': running = false; break;
-                case 'Q': running = false; break;
+            if(following) {
+                switch(ch) {
+                    case 'q': running = false; break;
+                    case 'Q': running = false; break;
 
-                case KEY_UP:   cursorUp(); break;
-                case KEY_DOWN: cursorDown(); break;
+                    case 'm': bookmark(currentLineNum()); break;
+                    case 'o': toggleShowLineNumbers(); break;
+                    case 'F': toggleFollowMode(); break;
+                }
+            } else {
+                switch(ch) {
+                    case 'q': running = false; break;
+                    case 'Q': running = false; break;
 
-                case KEY_HOME: home(); break;
-                case KEY_END: end(); break;
+                    case KEY_UP:   cursorUp(); break;
+                    case KEY_DOWN: cursorDown(); break;
 
-                case KEY_NPAGE: pageDown(); break;
-                case KEY_PPAGE: pageUp(); break;
+                    case KEY_HOME: home(); break;
+                    case KEY_END: end(); break;
 
-                case 'B': nextBookmark(DIRECTION_REVERSE); break;
-                case 'b': nextBookmark(DIRECTION_FORWARD); break;
-                case 'm': bookmark(currentLineNum()); break;
+                    case KEY_NPAGE: pageDown(); break;
+                    case KEY_PPAGE: pageUp(); break;
 
-                case 'o': toggleShowLineNumbers(); break;
+                    case 'B': nextBookmark(DIRECTION_REVERSE); break;
+                    case 'b': nextBookmark(DIRECTION_FORWARD); break;
+                    case 'm': bookmark(currentLineNum()); break;
+
+                    case 'o': toggleShowLineNumbers(); break;
+
+                    case 'F': toggleFollowMode(); break;
+                }
             }
         }
         console.endwin();
@@ -216,10 +238,14 @@ public class Garfield {
         console.move(x,y);
         int pair;      //line color pair
         if(selected) {
-            console.attron(CURRENT_LINE_PAIR);
+            pair = CURRENT_LINE_PAIR;
+            if(following) {
+                pair= FOLLOW_PAIR;
+            }
+            console.attron(pair);
             console.printw(row);
             fillLine(width-row.length(),' ');
-            console.attroff(CURRENT_LINE_PAIR);
+            console.attroff(pair);
 
             if(lineFlags.get(lineNum) != 0) {
                 //show first char as flag color
@@ -263,6 +289,9 @@ public class Garfield {
         fillLine(screenWidth,' ');
         console.move(0,getMaxY());
         console.printw("Type '?' for help | Line: "+currentLine+" of "+maxLines+" | File: "+filename+" | Updated: "+lastLoaded+" | W:"+screenWidth+" H:"+screenHeight);
+        if(following) {
+            console.printw(" | Following");
+        }
         console.attroff(STATUS_BAR_PAIR);
     }
 
@@ -442,5 +471,16 @@ public class Garfield {
     /** Toggle if we show line numbers. */
     void toggleShowLineNumbers() {
         showLineNumbers = !showLineNumbers;
+    }
+
+    void toggleFollowMode() {
+        if(following) {
+            following = false;
+            console.timeout(TIMEOUT_BLOCK);
+        } else {
+            following = true;
+            console.timeout(TIMEOUT_DELAY);
+            end();
+        }
     }
 }
