@@ -483,7 +483,7 @@ public class Garfield {
     /** Show the previous page of text. First line will be selected if needed. */
     void pageUp() {
         final int screenHeight = getMaxY();
-        lineOffset -=screenHeight-1;
+        lineOffset -= screenHeight-1;
         if(lineOffset < 0) {
             lineOffset = 0;
             lineScreen = 0;
@@ -494,9 +494,9 @@ public class Garfield {
     void pageDown() {
         final int screenHeight = getMaxY();
         lineOffset +=screenHeight-1;
-        if(lineOffset > linesInFile -screenHeight) {
-            lineOffset = linesInFile -screenHeight;
-            lineScreen =screenHeight-1;
+        if(lineOffset > linesInFile-screenHeight) {
+            lineOffset = linesInFile-screenHeight;
+            lineScreen = screenHeight-1;
         }
     }
 
@@ -642,9 +642,13 @@ public class Garfield {
         query = readLine(msg);
         queryWasRegex = useRegex;
         console.attroff(MESSAGE_PAIR);
+        lineFlags.reset(LINE_FOUND_FLAG);   //clear the previous search results
+        console.move(x,y);
+        console.clrtoeol();
+        console.printCenterX(y,"Searching");
+        console.refresh();
 
         if(query.length() > 0) {
-            lineFlags.reset(LINE_FOUND_FLAG);   //clear the previous search results
             boolean found = searchSetFlags(query,useRegex);
             if(found) {
                 ArrayList<Integer> flaggedLines = new ArrayList<>(lineFlags.keySet());
