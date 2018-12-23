@@ -23,6 +23,12 @@ Keys are meant to be a little like `less`.
 | q     | Quit                                      |
 | k     | Up                                        |
 | j     | Down                                      |
+| K     | Page Up                                   |
+| J     | Page Down                                 |
+| [     | Left                                      |
+| ]     | Right                                     |
+| {     | Scroll to the first letter of line        |
+| }     | Scroll to the last letter of line         |
 | f     | Follow                                    |
 | r     | Reload                                    |
 | m     | Set bookmark                              |
@@ -62,8 +68,6 @@ Reloads the file from disk. Position in file, and any bookmarks are preserved.
 - Filter (&) to display only matching lines, will need to show something on the status bar to indicate we are filtering
 - Multiple file support
 - Search shows the matching line *and* highlight the matching text
-- Goto line
-- Scrolling left/right
 - Word wrap
 - Remember bookmarks in files viewed
 
@@ -72,6 +76,9 @@ Reloads the file from disk. Position in file, and any bookmarks are preserved.
 Ability to show and monitor multiple files. Multiple files will be shown as a split screen. Initial versions will handle window resizing automatically, but later revs will allow the user to control the window size.
 
 When **follow** mode is active, all windows are set to follow mode. Later revs will allow the user to choose to activate only active file, or optionally all files.
+
+Could use the number keys to select what file to activate. Then you can have support for 9 files, if you use 0 to close a file.
+
 
 #JNI
 See [nconsole] for Java Native Interface (JNI) library.

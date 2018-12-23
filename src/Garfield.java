@@ -52,6 +52,8 @@ public class Garfield {
 
     private static final int KEY_LEFT = '[';
     private static final int KEY_RIGHT = ']';
+    private static final int KEY_LEFT_EDGE = '{';
+    private static final int KEY_RIGHT_EDGE = '}';
     private static final int KEY_UP = 'k';
     private static final int KEY_DOWN = 'j';
     private static final int KEY_NPAGE = 'J';
@@ -82,7 +84,9 @@ public class Garfield {
     private int lineScreen;
     private int linesInFile;
     private long fileSizeBytes;
+    private int fileMaxLineLength;
     private int lineOffset;
+    private int horzOffset;
     private int screenHeight,screenWidth;
     private boolean showLineNumbers;
     private int lineNumDigitCount;
@@ -199,6 +203,10 @@ public class Garfield {
 
                 case KEY_UP:    cursorUp(); break;
                 case KEY_DOWN:  cursorDown(); break;
+                case KEY_LEFT:  cursorLeft(false); break;
+                case KEY_RIGHT: cursorRight(false); break;
+                case KEY_LEFT_EDGE:  cursorLeft(true); break;
+                case KEY_RIGHT_EDGE: cursorRight(true); break;
                 case KEY_HOME:  home(); break;
                 case KEY_END:   end(); break;
                 case KEY_NPAGE: pageDown(); break;
@@ -264,6 +272,10 @@ public class Garfield {
         String line;
         while((line = in.readLine()) != null) {
             fileContents.add(line);
+            final int lineLength = line.length();
+            if(lineLength > fileMaxLineLength) {
+                fileMaxLineLength = lineLength;     //keep track of the longest line
+            }
         }
         in.close();
         linesInFile = fileContents.size();
@@ -299,16 +311,22 @@ public class Garfield {
      */
     private void showLine(int lineNum, boolean selected, int y, int width) {
         final int x=0;
-        String row;
+        String lineFormat = "%-"+(width-lineNumDigitCount-2)+"s";
+        StringBuilder row = new StringBuilder();
+        String selectedLine = fileContents.get(lineNum);
+
         if(showLineNumbers) {
-            String format = "%"+lineNumDigitCount+"d: %-"+(width-lineNumDigitCount-2)+"s";
-            row = String.format(format,lineNum+1, fileContents.get(lineNum));
+            String numberFormat = "%"+lineNumDigitCount+"d: ";
+            row.append(String.format(numberFormat,lineNum+1));
+            if(horzOffset < selectedLine.length()) {
+                row.append(String.format(lineFormat,selectedLine.substring(horzOffset)));
+            }
         } else {
-            row = fileContents.get(lineNum);
+            if(horzOffset < selectedLine.length()) {
+                row.append(String.format(lineFormat,selectedLine.substring(horzOffset)));
+            }
         }
-        if(row.length() > width) {
-            row = row.substring(0,width);
-        }
+
         console.move(x,y);
         int pair;      //line color pair
         if(selected) {
@@ -317,7 +335,7 @@ public class Garfield {
                 pair= FOLLOW_PAIR;
             }
             console.attron(pair);
-            console.printw(row);
+            console.printw(row.toString());
             fillLine(width-row.length(),' ');
             console.attroff(pair);
 
@@ -330,11 +348,10 @@ public class Garfield {
             }
         } else {
             pair = setLineColor(lineNum);
-            console.printw(row);
+            console.printw(row.toString());
             fillLine(width-row.length(),' ');
             console.attroff(pair);
         }
-
     }
 
     /**
@@ -361,11 +378,11 @@ public class Garfield {
     /** Show the status bar at the bottom of the screen. Shows things like current line number and filename. */
     private void showStatusBar() {
         console.attron(STATUS_BAR_PAIR);
-        final int currentLine = lineScreen + lineOffset +1;   //when showing the user, first line is 1, not 0.
+        final int currentLine = lineScreen + lineOffset + 1;   //when showing the user, first line is 1, not 0.
         console.move(0,getMaxY());
         fillLine(screenWidth,' ');
         console.move(0,getMaxY());
-        console.printw("Help 'h' | "+currentLine+"/"+linesInFile+" | "+filename+" | Updated: "+lastLoaded+" | W:"+screenWidth+" H:"+screenHeight);
+        console.printw("Help 'h' | "+(horzOffset+1)+":"+currentLine+"/"+linesInFile+" | "+filename+" | Updated: "+lastLoaded+" | W:"+screenWidth+" H:"+screenHeight);
 //        console.printw("Line "+currentLine+" of "+ linesInFile +" | lineOffset "+ lineOffset +" | lineScreen "+ lineScreen +" | W:"+screenWidth+" H:"+screenHeight);
         if(following) {
             console.printw(" | Following");
@@ -411,14 +428,47 @@ public class Garfield {
         }
     }
 
+    /** Scroll left. Text moves to the right. */
+    private void cursorLeft(boolean edge) {
+        if(edge) {
+            horzOffset = 0;
+        } else {
+            horzOffset--;
+            if(horzOffset < 0) {
+                horzOffset = 0;
+            }
+        }
+    }
+
+    /** Scroll right. Text moves to the left. */
+    private void cursorRight(boolean edge) {
+        if(fileMaxLineLength > screenWidth) {
+            int digitCount = 0;
+            if(showLineNumbers) {
+                //take into consideration the line number characters and ": " at the end
+                digitCount = lineNumDigitCount+2;
+            }
+            if(edge) {
+                horzOffset = fileMaxLineLength-screenWidth+digitCount;
+            } else {
+                horzOffset++;
+                if(horzOffset > fileMaxLineLength-screenWidth+digitCount) {
+                    horzOffset = fileMaxLineLength-screenWidth+digitCount;
+                }
+            }
+        }
+    }
+
     /** Move to the first line of the file. */
     void home() {
+        horzOffset = 0;
         lineOffset = 0;
         lineScreen = 0;
     }
 
     /** Move to the last line of the file. */
     void end() {
+        horzOffset = 0;
         final int visibleLines = getMaxY()-1;
         if(linesInFile <= visibleLines) {
             //we don't need to scroll
@@ -555,6 +605,12 @@ public class Garfield {
     /** Toggle if we show line numbers. */
     void toggleShowLineNumbers() {
         showLineNumbers = !showLineNumbers;
+        if(!showLineNumbers) {
+            horzOffset -= lineNumDigitCount+2;
+            if(horzOffset < 0) {
+                horzOffset = 0;
+            }
+        }
     }
 
     /** Set or turn off follow mode. */
