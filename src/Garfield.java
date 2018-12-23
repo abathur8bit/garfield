@@ -70,8 +70,8 @@ public class Garfield {
     private static final int KEY_SEARCH_PREV = 'N';
     private static final int KEY_ENTER = 10;
     private static final int KEY_BACKSPACE = 127;
-    private static final int KEY_REFRESH = 'r';
-    private static final int KEY_RELOAD = 'R';
+    private static final int KEY_RELOAD = 'r';
+    private static final int KEY_GOTO = 'g';
 
     private final NConsole console;
     private final String filename;
@@ -216,8 +216,8 @@ public class Garfield {
                 case KEY_SEARCH_NEXT:       searchAgain(DIRECTION_FORWARD); break;
                 case KEY_SEARCH_PREV:       searchAgain(DIRECTION_REVERSE); break;
 
-                case KEY_REFRESH:           refresh(false); break;
                 case KEY_RELOAD:            refresh(true); break;
+                case KEY_GOTO:              gotoLine(); break;
             }
         }
     }
@@ -693,5 +693,29 @@ public class Garfield {
         } while(ch != KEY_ENTER);
         console.timeout(TIMEOUT_DELAY); //back to normal
         return buff.toString();
+    }
+
+    /** Asks the user what line to put the cursor on, and scrolls that line into view. */
+    private void gotoLine() {
+        console.attron(MESSAGE_PAIR);
+        final int x=0,y=getMaxY();
+        console.move(x,y);
+        fillLine(screenWidth,' ');
+        console.refresh();
+        String lineInput = readLine("Goto line: ");
+        if(lineInput.length() > 0) {
+            int lineNum;
+            try {
+                lineNum = Integer.parseInt(lineInput);
+            } catch(NumberFormatException e) {
+                lineNum = 0;
+            }
+            if(lineNum < 1 || lineNum > linesInFile) {
+                showMsg("Line number out of range");
+            } else {
+                scrollIntoView(lineNum-1);
+            }
+        }
+        console.attroff(MESSAGE_PAIR);
     }
 }

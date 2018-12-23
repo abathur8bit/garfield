@@ -24,7 +24,7 @@ Keys are meant to be a little like `less`.
 | k     | Up                                        |
 | j     | Down                                      |
 | f     | Follow                                    |
-| r     | Refresh                                   |
+| r     | Reload                                    |
 | m     | Set bookmark                              |
 | b     | Next bookmark                             |
 | B     | Prev bookmark                             |
