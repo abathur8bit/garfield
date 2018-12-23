@@ -64,7 +64,7 @@ public class Garfield {
     private static final int KEY_SHOW_LINE_NUMBERS = 'o';
     private static final int KEY_BOOKMARK_SET = 'm';
     private static final int KEY_BOOKMARK_NEXT = 'b';
-    private static final int KEY_BOOKMARK_PREV = 'M';
+    private static final int KEY_BOOKMARK_PREV = 'B';
     private static final int KEY_QUIT = 'q';
     private static final int KEY_SEARCH = '/';
     private static final int KEY_SEARCH_REGEX = '?';
@@ -519,14 +519,14 @@ public class Garfield {
             currentLine+=dir;
 
         if(DIRECTION_FORWARD==dir) {
-            for(int i = currentLine; i< linesInFile; i++) {
+            for(int i = currentLine+1; i<linesInFile; i++) {
                 if(lineFlags.isSet(i,LINE_BOOKMARKED_FLAG)) {
                     scrollIntoView(i);
                     return;
                 }
             }
         } else {
-            for(int i=currentLine; i>=0; i--) {
+            for(int i=currentLine-1; i>=0; i--) {
                 if(lineFlags.isSet(i,LINE_BOOKMARKED_FLAG)) {
                     scrollIntoView(i);
                     return;
