@@ -134,7 +134,7 @@ public class Garfield {
         console.initscr();
         console.initPair(CURRENT_LINE_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_WHITE);
         console.initPair(STATUS_BAR_PAIR,NConsole.COLOR_YELLOW,NConsole.COLOR_BLUE);
-        console.initPair(BOOKMARK_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_CYAN);
+        console.initPair(BOOKMARK_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
         console.initPair(MESSAGE_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
         console.initPair(FOLLOW_PAIR,NConsole.COLOR_BLACK, NConsole.COLOR_CYAN);
         console.initPair(SEARCH_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_YELLOW);
@@ -709,18 +709,20 @@ public class Garfield {
 
     private boolean searchSetFlags(String query,boolean useRegex) {
         boolean found = false;
-        for(int i = 0; i < fileContents.size(); i++) {
-            if(useRegex) {
-                Pattern pattern = Pattern.compile(query);
-                Matcher m = pattern.matcher(fileContents.get(i));
-                if(m.find()) {
-                    lineFlags.set(i,LINE_FOUND_FLAG);
-                    found = true;
-                }
-            } else {
-                if(fileContents.get(i).contains(query)) {
-                    lineFlags.set(i,LINE_FOUND_FLAG);
-                    found = true;
+        if(query != null && query.length() > 0) {
+            for(int i = 0; i < fileContents.size(); i++) {
+                if(useRegex) {
+                    Pattern pattern = Pattern.compile(query);
+                    Matcher m = pattern.matcher(fileContents.get(i));
+                    if(m.find()) {
+                        lineFlags.set(i,LINE_FOUND_FLAG);
+                        found = true;
+                    }
+                } else {
+                    if(fileContents.get(i).contains(query)) {
+                        lineFlags.set(i,LINE_FOUND_FLAG);
+                        found = true;
+                    }
                 }
             }
         }

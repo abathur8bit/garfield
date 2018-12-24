@@ -52,6 +52,10 @@ Not yet implemented:
 # Features explained
 Explanation of features.
 
+## Search
+Regular search, regex search. After doing a search, you can turn filter mode on to show only matching lines. 
+
+
 ## Follow
 Follow the file. Best for monitoring files in real time. Any changes to the file will be shown, and the bottom of the file is always in view. 
 
@@ -70,6 +74,15 @@ Reloads the file from disk. Position in file, and any bookmarks are preserved.
 - Search shows the matching line *and* highlight the matching text
 - Word wrap
 - Remember bookmarks in files viewed
+- Case insensitive searches
+- Ability to choose between case and no case in searches
+- Launch Garfield with -l param will start the last session
+ 
+
+## Search
+Search history. When you hit the up arrow, it will show previous queries. Down will show the next query. When it goes past the last one, a blank line is shows. 
+
+Line editor. Allows you to edit the query you are working on. You can use the left/right arrows to move around in the query. Backspace and delete buttons will delete charaters.
 
 
 ## Multiple file support
@@ -85,15 +98,22 @@ See [nconsole] for Java Native Interface (JNI) library.
 
 # Building/running
 Currently tied to [nconsole] project, and I need to fix up the project to make it so someone else can run it.
+
+```
 mkdir -p classes
 cp ../nconsole/nconsole.jar lib
 cp ../nconsole/*.so lib
 javac -d classes -cp lib/nconsole.jar src/*
 java -Djava.library.path=../nconsole -cp lib/nconsole.jar:classes Garfield README.md 
+```
 
 
+# Log file blocks
+This section is for notes on how to break up the blocks of a log file. Regex strings I can use to identify the start of a log entry.
 
+Finds a date in the form of "2018/12/12" from the start of the line. The '/' can be any character. I have see / and - used already.
 
+^\d\d\d\d.\d\d.\d\d
 
 
 [garfield]: https://github.com/abathur8bit/garfield
