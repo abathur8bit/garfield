@@ -343,7 +343,11 @@ public class Garfield {
                 //show first char as flag color
                 console.move(x,y);
                 pair = setLineColor(lineNum);
-                fillLine(1, ' ');
+                if(row.length()>0) {
+                    fillLine(1,row.charAt(0));
+                } else {
+                    fillLine(1,' ');
+                }
                 console.attroff(pair);
             }
         } else {
@@ -375,7 +379,9 @@ public class Garfield {
     }
 
 
-    /** Show the status bar at the bottom of the screen. Shows things like current line number and filename. */
+    /** Show the status bar at the bottom of the screen. Shows things like current line number and filename.
+     * Help 'h' | 1:1/32 | a.txt | C Updated: Mon Dec 24 16:36:04 EST 2018 | W:95 H:27
+     */
     private void showStatusBar() {
         console.attron(STATUS_BAR_PAIR);
         final int currentLine = lineScreen + lineOffset + 1;   //when showing the user, first line is 1, not 0.
