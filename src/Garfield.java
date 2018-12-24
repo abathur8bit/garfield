@@ -74,6 +74,7 @@ public class Garfield {
     private static final int KEY_BACKSPACE = 127;
     private static final int KEY_RELOAD = 'r';
     private static final int KEY_GOTO = 'g';
+    private static final int KEY_IGNORE_CASE = 'i';
 
     private final NConsole console;
     private final String filename;
@@ -94,6 +95,7 @@ public class Garfield {
     private boolean following = false;
     private String query;
     private boolean queryWasRegex = false;
+    private boolean ignoreCase = true;
 
     private static void usage() {
         System.out.println("Garfield Log Viewer");
@@ -226,6 +228,7 @@ public class Garfield {
 
                 case KEY_RELOAD:            refresh(true); break;
                 case KEY_GOTO:              gotoLine(); break;
+                case KEY_IGNORE_CASE:       toggleIgnoreCase(); break;
             }
         }
     }
@@ -380,19 +383,35 @@ public class Garfield {
 
 
     /** Show the status bar at the bottom of the screen. Shows things like current line number and filename.
-     * Help 'h' | 1:1/32 | a.txt | C Updated: Mon Dec 24 16:36:04 EST 2018 | W:95 H:27
+     * Help 'h' | 1:1/32 | a.txt | C R F | Updated: Mon Dec 24 16:36:04 EST 2018 | W:95 H:27
      */
     private void showStatusBar() {
+        final int activePair = MESSAGE_PAIR;
         console.attron(STATUS_BAR_PAIR);
         final int currentLine = lineScreen + lineOffset + 1;   //when showing the user, first line is 1, not 0.
         console.move(0,getMaxY());
         fillLine(screenWidth,' ');
         console.move(0,getMaxY());
-        console.printw("Help 'h' | "+(horzOffset+1)+":"+currentLine+"/"+linesInFile+" | "+filename+" | Updated: "+lastLoaded+" | W:"+screenWidth+" H:"+screenHeight);
-//        console.printw("Line "+currentLine+" of "+ linesInFile +" | lineOffset "+ lineOffset +" | lineScreen "+ lineScreen +" | W:"+screenWidth+" H:"+screenHeight);
-        if(following) {
-            console.printw(" | Following");
+
+        console.printw("Help 'h' | "+(horzOffset+1)+":"+currentLine+"/"+linesInFile+" | ");
+        if(ignoreCase) {
+            console.attron(activePair);
         }
+        console.printw("C");
+        if(ignoreCase) {
+            console.attron(STATUS_BAR_PAIR);
+        }
+        if(following) {
+            console.attron(activePair);
+        }
+        console.printw("F");
+        if(following) {
+            console.attron(STATUS_BAR_PAIR);
+        }
+
+        console.printw(" | "+filename);
+
+//        console.printw("Line "+currentLine+" of "+ linesInFile +" | lineOffset "+ lineOffset +" | lineScreen "+ lineScreen +" | W:"+screenWidth+" H:"+screenHeight);
         console.attroff(STATUS_BAR_PAIR);
     }
 
@@ -717,15 +736,31 @@ public class Garfield {
         boolean found = false;
         if(query != null && query.length() > 0) {
             for(int i = 0; i < fileContents.size(); i++) {
+                String row;
+                String qry;
+                if(ignoreCase) {
+                    row = fileContents.get(i).toLowerCase();
+                    qry = query.toLowerCase();
+                } else {
+                    row = fileContents.get(i);
+                    qry = query;
+                }
                 if(useRegex) {
-                    Pattern pattern = Pattern.compile(query);
-                    Matcher m = pattern.matcher(fileContents.get(i));
+                    final Pattern pattern;
+                    final Matcher m;
+                    if(ignoreCase) {
+                        pattern = Pattern.compile(qry);
+                        m = pattern.matcher(row.toLowerCase());
+                    } else {
+                        pattern = Pattern.compile(qry);
+                        m = pattern.matcher(row);
+                    }
                     if(m.find()) {
                         lineFlags.set(i,LINE_FOUND_FLAG);
                         found = true;
                     }
                 } else {
-                    if(fileContents.get(i).contains(query)) {
+                    if(row.contains(qry)) {
                         lineFlags.set(i,LINE_FOUND_FLAG);
                         found = true;
                     }
@@ -785,5 +820,12 @@ public class Garfield {
             }
         }
         console.attroff(MESSAGE_PAIR);
+    }
+
+    private void toggleIgnoreCase() {
+        ignoreCase = !ignoreCase;
+        lineFlags.reset(LINE_FOUND_FLAG);   //clear the previous search results
+        searchSetFlags(query,queryWasRegex);
+        console.clear();
     }
 }
