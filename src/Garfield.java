@@ -75,6 +75,7 @@ public class Garfield {
     private static final int KEY_RELOAD = 'r';
     private static final int KEY_GOTO = 'g';
     private static final int KEY_IGNORE_CASE = 'i';
+    private static final int KEY_HELP = 'h';
 
     private final NConsole console;
     private final String filename;
@@ -136,9 +137,9 @@ public class Garfield {
         console.initscr();
         console.initPair(CURRENT_LINE_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_WHITE);
         console.initPair(STATUS_BAR_PAIR,NConsole.COLOR_YELLOW,NConsole.COLOR_BLUE);
-        console.initPair(BOOKMARK_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
-        console.initPair(MESSAGE_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
-        console.initPair(FOLLOW_PAIR,NConsole.COLOR_BLACK, NConsole.COLOR_CYAN);
+        console.initPair(BOOKMARK_PAIR,NConsole.COLOR_WHITE,NConsole.COLOR_RED);
+        console.initPair(MESSAGE_PAIR,NConsole.COLOR_WHITE,NConsole.COLOR_RED);
+        console.initPair(FOLLOW_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_CYAN);
         console.initPair(SEARCH_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_YELLOW);
 //        showSplash();
     }
@@ -229,6 +230,7 @@ public class Garfield {
                 case KEY_RELOAD:            refresh(true); break;
                 case KEY_GOTO:              gotoLine(); break;
                 case KEY_IGNORE_CASE:       toggleIgnoreCase(); break;
+                case KEY_HELP:              showHelp(); break;
             }
         }
     }
@@ -828,4 +830,34 @@ public class Garfield {
         searchSetFlags(query,queryWasRegex);
         console.clear();
     }
+
+    private void showHelp() {
+        console.clear();
+        console.timeout(TIMEOUT_BLOCK);
+        console.printw("Garfield Help\n");
+        console.printw("Keys:\n");
+        console.printw("h                           Help screen\n");
+        console.printw("q                           Quit\n");
+        console.printw("r                           Reload file and refresh screen\n");
+        console.printw("g                           Goto line\n");
+        console.printw("o                           Show line numbers\n");
+        console.printw("\n");
+        console.printw("Navigation:\n");
+        console.printw("j/k Down-Arrow/Up Arrow     Down/Up one line\n");
+        console.printw("</>                         Scroll to top/bottom of file\n");
+        console.printw("[/] Left-Arrow/Right-Arrow  Scroll left/right\n");
+        console.printw("{/}                         Scroll to left/right edge\n");
+        console.printw("\n");
+        console.printw("Search / Bookmarks:\n");
+        console.printw("(Clear a search by typing '/' then ENTER without a query)\n");
+        console.printw("/ Search             ? Regular expression search\n");
+        console.printw("n Next match         N Previous match   i Ignore case (default)\n");
+        console.printw("m Mark a bookmark    b Next bookmark    B Previous bookmark\n");
+        showMsg("To continue");
+        console.getch();
+        console.timeout(TIMEOUT_DELAY);
+        console.clear();
+    }
 }
+
+
