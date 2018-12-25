@@ -153,7 +153,18 @@ public class Garfield {
         console.getch();
     }
 
-    /** Our main loop. Displays everything on the screen, including the file and status bar. */
+    /**
+     * Our main loop. Displays everything on the screen, including the file and status bar.
+     *
+     * Key sequence read when you press the following buttons:
+     *   SEQUENCE       KEY
+     *   27,91,65       up
+     *   27,91,66       down
+     *   27,91,68       left
+     *   27,91,67       right
+     *   27,91,53,126   pg up
+     *   27,91,54,126   pg down
+     */
     @SuppressWarnings("WeakerAccess")
     public void view() throws IOException {
         console.timeout(TIMEOUT_DELAY);
@@ -161,12 +172,52 @@ public class Garfield {
         screenWidth = console.getWidth();
         screenHeight = console.getHeight();
         console.clear();
+        boolean escaped = false;    //ch was escaped
+        boolean canProcessKey = true;
         while(running) {
             updateDisplay();
             int ch = console.getch();
+            if(ch == 27) {
+                escaped = true;
+                canProcessKey = false;
+            } else if(ch == 91) {
+                escaped = true;
+                canProcessKey = false;
+            } else if(ch == 126) {
+                escaped = false;
+                canProcessKey = true;
+            } else if(escaped) {
+                if(ch == 65) {
+                    ch = KEY_UP;
+                    canProcessKey = true;
+                    escaped = false;
+                } else if(ch == 66) {
+                    ch = KEY_DOWN;
+                    canProcessKey = true;
+                    escaped = false;
+                } else if(ch == 68) {
+                    ch = KEY_LEFT;
+                    canProcessKey = true;
+                    escaped = false;
+                } else if(ch == 67) {
+                    ch = KEY_RIGHT;
+                    canProcessKey = true;
+                    escaped = false;
+                } else if(ch == 53) {
+                    ch = KEY_PPAGE;
+                    canProcessKey = true;
+                    escaped = false;
+                } else if(ch == 54) {
+                    ch = KEY_NPAGE;
+                    canProcessKey = true;
+                    escaped = false;
+                }
+            }
             updateWindowSize();
             checkFileChanged();
-            processKey(ch);
+            if(canProcessKey) {
+                processKey(ch);
+            }
         }
         console.endwin();
     }
