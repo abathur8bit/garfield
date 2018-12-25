@@ -42,6 +42,7 @@ public class Garfield {
     private static final int DIRECTION_REVERSE = -1;
     private static final int LINE_FOUND_FLAG=2;
     private static final int LINE_BOOKMARKED_FLAG=4;
+    private static final int LOG_FLAG=8;
 
     private static final int CURRENT_LINE_PAIR = 1;
     private static final int STATUS_BAR_PAIR = 2;
@@ -49,6 +50,7 @@ public class Garfield {
     private static final int MESSAGE_PAIR = 4;
     private static final int FOLLOW_PAIR = 5;
     private static final int SEARCH_PAIR = 6;
+    private static final int LOG_PAIR = 7;
 
     private static final int KEY_LEFT = '[';
     private static final int KEY_RIGHT = ']';
@@ -96,6 +98,7 @@ public class Garfield {
     private String query;
     private boolean queryWasRegex = false;
     private boolean ignoreCase = true;
+    private boolean logBlocks = false;      //show log blocks based on having a date
 
     private static void usage() {
         System.out.println("Garfield Log Viewer");
@@ -140,6 +143,7 @@ public class Garfield {
         console.initPair(MESSAGE_PAIR,NConsole.COLOR_WHITE, NConsole.COLOR_RED);
         console.initPair(FOLLOW_PAIR,NConsole.COLOR_BLACK, NConsole.COLOR_CYAN);
         console.initPair(SEARCH_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_YELLOW);
+        console.initPair(LOG_PAIR,NConsole.COLOR_BLACK,NConsole.COLOR_BLUE);
 //        showSplash();
     }
 
