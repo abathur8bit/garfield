@@ -74,7 +74,6 @@ Reloads the file from disk. Position in file, and any bookmarks are preserved.
 - Search shows the matching line *and* highlight the matching text
 - Word wrap
 - Remember bookmarks in files viewed
-- Ability to choose between case and no case in searches
 - Launch Garfield with -l param will start the last session
  
 
