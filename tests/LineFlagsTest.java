@@ -99,4 +99,10 @@ class LineFlagsTest {
         assertEquals(1,lf.get(1));
         assertEquals(8,lf.get(2));
     }
+
+    @Test
+    void getEmpty() {
+        LineFlags lf = new LineFlags();
+        assertEquals(0,lf.get(99)); //nothing exists
+    }
 }

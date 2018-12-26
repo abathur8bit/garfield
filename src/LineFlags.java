@@ -13,7 +13,11 @@ public class LineFlags {
 
     /** Return the current flag value for the given line number. */
     public int get(int lineNum) {
-        return lineFlags.getOrDefault(lineNum,0);
+        Integer flag = lineFlags.get(lineNum);
+        if(flag == null) {
+            return 0;
+        }
+        return flag;
     }
 
     /**
