@@ -677,11 +677,13 @@ public class Garfield {
 
         if(query.length() > 0) {
             boolean found = searchSetFlags(query,useRegex);
+            showFile();
+            console.refresh();
             if(found) {
                 ArrayList<Integer> flaggedLines = new ArrayList<>(lineFlags.keySet());
                 Collections.sort(flaggedLines);
                 if(!scrollMatchedLineIntoView(flaggedLines,DIRECTION_FORWARD)) {
-                    showMsg("No more matches.");
+                    showMsg("No more matches");
                 }
             } else {
                 showMsg("Not found");
@@ -697,7 +699,7 @@ public class Garfield {
         ArrayList<Integer> flaggedLines = new ArrayList<>(lineFlags.keySet());  //all lines with ANY flag
         Collections.sort(flaggedLines);
         if(!scrollMatchedLineIntoView(flaggedLines,direction)) {
-            showMsg("No more matches.");
+            showMsg("No more matches");
         }
     }
 
