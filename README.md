@@ -1,16 +1,16 @@
-# Garfield the log viewer
-Garfield, or garf for short, is a console based log and text file viewer. Its purpose is to provide a rich set of viewing, searching, and filtering features that are missing in `tail` and `less`. Features like bookmarking, filtering, and intelligently highlighting log blocks make it easier to work with large log files with lots of exception traces. 
+# GLOV the log viewer
+**GLOV** (**G**UI'less **LO**g **V**iewer) is an [open source][glov-src] console based log and text file viewing utility. If you routinely find yourself using **less** and **tail** on log files while you are shh'ed to a remote machine, then glov is a utility that will interest you. Its purpose is to provide a rich set of viewing, searching, and filtering features that are missing in `tail` and `less`. Features like bookmarking, filtering, and intelligently highlighting log blocks make it easier to work with large log files with lots of exception traces. 
 
-Why not just use something like splunk? Most of the log files I look at are on a *nix box, and the only access is through an ssh session. Using less and tail is frustrating, as it's hard to see where a log block starts and ends. It's also hard to look at multiple places in the file, or keep track of something you were previously looking at.
+Designed out of the need to have a command line log file viewer that would give me ability to view a file, search it, show line numbers, set bookmarks, and monitor it in real time. Something like **less** is great, but if I want to monitor the file, I always found myself using line numbers when I needed to see if the file changed, which is problematic if I don't remember the line number. Using **tail -f** is great for monitoring a file, and if you hit enter a few times, it effectively *marks* the location so you can continue to monitor the file, and know where you marked it. But neither are ideal. Something that will let me bounce around the file, bookmark locations, and monitor is what is really needed.
 
-So bookmarking lets you jump around the file, filtering lets you toss out crap you are not interested in, all while watching the file in realtime. 
+Although the idea of using something like [splunk] is great in theory, in practice a lot of enterprises don't use it for all their apps, which leaves the developers needing to use some combination of **ssh+less+tail**. Hence the desire for something that combines the best of both tools, but add some additional features.
 
 Garifled is written in Java. Since Java doesn't provide the ability to monitor the keyboard for individual keypresses, and can't control a terminal in *nix or Windows, Garfield utilizes [NConsole] for it's low level console i/o. Under Linix and macOS, this means it uses ncursors. Under windows it uses native windows console API.
 
 **Note:** Windows support isn't in place yet. Plan is to use the same methods as on *nix systems. 
 
 # Usage
-$ garf filename
+$ glov filename
 
 Filename is the text file you want to view.
 
@@ -117,3 +117,10 @@ Finds a date in the form of "2018/12/12" from the start of the line. The '/' can
 
 [garfield]: https://github.com/abathur8bit/garfield
 [nconsole]: https://github.com/abathur8bit/nconsole
+[regex]: https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html
+[glov]: http://axorion.com/glov
+[glov-src]: https://github.com/abathur8bit/garfield
+[splunk]: https://www.splunk.com
+[gas]: http://axorion.com/gms
+[8bitblog]: http://www.8bitcoder.com/category/blog/
+[axorion]: http://axorion.com

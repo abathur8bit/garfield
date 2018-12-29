@@ -255,6 +255,8 @@ public class Garfield {
                 case KEY_BOOKMARK_SET: bookmark(currentLineNum()); break;
                 case KEY_SHOW_LINE_NUMBERS: toggleShowLineNumbers(); break;
                 case KEY_FOLLOW: toggleFollowMode(); break;
+                case KEY_IGNORE_CASE:       toggleIgnoreCase(); break;
+                case KEY_HELP:              showHelp(); break;
             }
         } else {
             //all keys are valid
