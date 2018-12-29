@@ -1,0 +1,6 @@
+#!/bin/bash
+# $@ - all command line params
+# $1 - first param
+# $# - number of command line params
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+java -cp $DIR/garfield.jar:$DIR/nconsole.jar -Djava.library.path=$DIR Garfield $@
