@@ -29,13 +29,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * File viewer command line application. Like less, but you can do a few other things to make viewing and searching
  * files easier.
  */
 public class Garfield {
-    private static final int TIMEOUT_DELAY = 100;
+    private static final int TIMEOUT_DELAY = 250;
     private static final int TIMEOUT_BLOCK = -1;
 
     private static final int DIRECTION_FORWARD = 1;
@@ -672,11 +673,32 @@ public class Garfield {
         console.move(0,console.getHeight()-1);
         console.attron(MESSAGE_PAIR);
         fillLine(screenWidth,' ');
-        console.printCenterX(getMaxY(),msg+" - PRESS ENTER");
+        console.printCenterX(getMaxY(),msg.trim()+" - PRESS ENTER");
         console.attroff(MESSAGE_PAIR);
         console.refresh();
         console.timeout(TIMEOUT_BLOCK);
         console.getch();
+        console.timeout(TIMEOUT_DELAY);
+    }
+
+    void showMultiLineMsg(String title,String msg) {
+        final int numLines = 5;
+        console.attron(MESSAGE_PAIR);
+        console.move(0,getMaxY()-numLines);
+        fillLine(screenWidth,' ');
+        console.move(0,getMaxY()-numLines);
+        console.printw(title);
+        console.attroff(MESSAGE_PAIR);
+        for(int i=0; i<numLines; i++) {
+            console.move(0,getMaxY()-i);
+            fillLine(screenWidth,' ');
+        }
+        console.move(0,getMaxY()-(numLines-1));
+        console.printw(msg);
+        console.refresh();
+        console.timeout(TIMEOUT_BLOCK);
+        console.getch();
+        console.clear();
         console.timeout(TIMEOUT_DELAY);
     }
 
@@ -727,17 +749,21 @@ public class Garfield {
         console.refresh();
 
         if(query.length() > 0) {
-            boolean found = searchSetFlags(query,useRegex);
-            showFile();
-            console.refresh();
-            if(found) {
-                ArrayList<Integer> flaggedLines = new ArrayList<>(lineFlags.keySet());
-                Collections.sort(flaggedLines);
-                if(!scrollMatchedLineIntoView(flaggedLines,DIRECTION_FORWARD)) {
-                    showMsg("No more matches");
+            try {
+                boolean found = searchSetFlags(query,useRegex);
+                showFile();
+                console.refresh();
+                if(found) {
+                    ArrayList<Integer> flaggedLines = new ArrayList<>(lineFlags.keySet());
+                    Collections.sort(flaggedLines);
+                    if(!scrollMatchedLineIntoView(flaggedLines,DIRECTION_FORWARD)) {
+                        showMsg("No more matches");
+                    }
+                } else {
+                    showMsg("Not found");
                 }
-            } else {
-                showMsg("Not found");
+            } catch(PatternSyntaxException e) {
+                showMultiLineMsg("Regular expression error - PRESS ENTER",e.getMessage());
             }
         }
     }
@@ -787,7 +813,7 @@ public class Garfield {
         return false;
     }
 
-    private boolean searchSetFlags(String query,boolean useRegex) {
+    private boolean searchSetFlags(String query,boolean useRegex) throws PatternSyntaxException {
         boolean found = false;
         if(query != null && query.length() > 0) {
             for(int i = 0; i < fileContents.size(); i++) {
