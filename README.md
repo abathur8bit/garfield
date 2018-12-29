@@ -9,49 +9,54 @@ Garifled is written in Java. Since Java doesn't provide the ability to monitor t
 
 **Note:** Windows support isn't in place yet. Plan is to use the same methods as on *nix systems. 
 
+
 # Usage
 $ glov filename
 
 Filename is the text file you want to view.
 
 
+# Building/running
+Deployment could use some work, sorry. You can use the files in the dist folder to just start using it. 
+
 # Keymap
 Keys are meant to be a little like `less`. 
 
-| Key   | Action                                    |
-|-------|----                                       |
-| q     | Quit                                      |
-| k     | Up                                        |
-| j     | Down                                      |
-| K     | Page Up                                   |
-| J     | Page Down                                 |
-| [     | Left                                      |
-| ]     | Right                                     |
-| {     | Scroll to the first letter of line        |
-| }     | Scroll to the last letter of line         |
-| f     | Follow                                    |
-| r     | Reload                                    |
-| m     | Set bookmark                              |
-| b     | Next bookmark                             |
-| B     | Prev bookmark                             |
-| o     | Toggle showing line numbers               |
-| /     | Search                                    |
-| ?     | Regular expression search                 |
-| n     | Search next                               |
-| N     | Search previous                           |
-| c     | Toggle ignore case (default ignore)       |
-| g     | Goto specified line                       |
+| Key           | Action                                    |
+|-------        |----                                       |
+| h             | Help Keymap                               |
+| q             | Quit                                      |
+| k / Up        | Up                                        |
+| j / Down      | Down                                      |
+| K / PG Up     | Page Up                                   |
+| J / PG Down   | Page Down                                 |
+| \[ / Left     | Scroll Left                               |
+| \] / Right    | Scroll Right  (right arrow)               |
+| {             | Scroll to the first letter of line        |
+| }             | Scroll to the last letter of line         |
+| f             | Follow                                    |
+| r             | Reload                                    |
+| m             | Set bookmark                              |
+| b             | Next bookmark                             |
+| B             | Prev bookmark                             |
+| o             | Toggle showing line numbers               |
+| /             | Search                                    |
+| ?             | Regular expression search                 |
+| n             | Search next                               |
+| N             | Search previous                           |
+| c             | Toggle ignore case (default ignore)       |
+| g             | Goto specified line                       |
 
 Not yet implemented:
 
-| Key   | Action                                    |
-|-------|---                                        |
-| &     | Display only matching lines               |
-
+| Key           | Action                                    |
+|-------        |---                                        |
+| &             | Display only matching lines               |
 
 
 # Features explained
 Explanation of features.
+
 
 ## Search
 Regular search, regex search. After doing a search, you can turn filter mode on to show only matching lines. 
@@ -78,6 +83,7 @@ Reloads the file from disk. Position in file, and any bookmarks are preserved.
 - Launch Garfield with -l param will start the last session
  
 
+
 ## Search
 Search history. When you hit the up arrow, it will show previous queries. Down will show the next query. When it goes past the last one, a blank line is shows. 
 
@@ -94,17 +100,6 @@ Could use the number keys to select what file to activate. Then you can have sup
 
 #JNI
 See [nconsole] for Java Native Interface (JNI) library.
-
-# Building/running
-Currently tied to [nconsole] project, and I need to fix up the project to make it so someone else can run it.
-
-```
-mkdir -p classes
-cp ../nconsole/nconsole.jar lib
-cp ../nconsole/*.so lib
-javac -d classes -cp lib/nconsole.jar src/*
-java -Djava.library.path=../nconsole -cp lib/nconsole.jar:classes Garfield README.md 
-```
 
 
 # Log file blocks
