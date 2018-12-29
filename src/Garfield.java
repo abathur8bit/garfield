@@ -75,7 +75,7 @@ public class Garfield {
     private static final int KEY_BACKSPACE = 127;
     private static final int KEY_RELOAD = 'r';
     private static final int KEY_GOTO = 'g';
-    private static final int KEY_IGNORE_CASE = 'i';
+    private static final int KEY_IGNORE_CASE = 'c';
     private static final int KEY_HELP = 'h';
 
     private final NConsole console;
@@ -173,50 +173,55 @@ public class Garfield {
         boolean escaped = false;    //ch was escaped
         boolean canProcessKey = true;
         while(running) {
-            updateDisplay();
-            int ch = console.getch();
-            if(ch == 27) {
-                escaped = true;
-                canProcessKey = false;
-            } else if(ch == 91) {
-                escaped = true;
-                canProcessKey = false;
-            } else if(ch == 126) {
-                escaped = false;
-                canProcessKey = true;
-            } else if(escaped) {
-                if(ch == 65) {
-                    ch = KEY_UP;
-                    canProcessKey = true;
+            try {
+                updateDisplay();
+                int ch = console.getch();
+                if(ch == 27) {
+                    escaped = true;
+                    canProcessKey = false;
+                } else if(ch == 91) {
+                    escaped = true;
+                    canProcessKey = false;
+                } else if(ch == 126) {
                     escaped = false;
-                } else if(ch == 66) {
-                    ch = KEY_DOWN;
                     canProcessKey = true;
-                    escaped = false;
-                } else if(ch == 68) {
-                    ch = KEY_LEFT;
-                    canProcessKey = true;
-                    escaped = false;
-                } else if(ch == 67) {
-                    ch = KEY_RIGHT;
-                    canProcessKey = true;
-                    escaped = false;
-                } else if(ch == 53) {
-                    ch = KEY_PPAGE;
-                    canProcessKey = true;
-                    escaped = false;
-                } else if(ch == 54) {
-                    ch = KEY_NPAGE;
-                    canProcessKey = true;
-                    escaped = false;
+                } else if(escaped) {
+                    if(ch == 65) {
+                        ch = KEY_UP;
+                        canProcessKey = true;
+                        escaped = false;
+                    } else if(ch == 66) {
+                        ch = KEY_DOWN;
+                        canProcessKey = true;
+                        escaped = false;
+                    } else if(ch == 68) {
+                        ch = KEY_LEFT;
+                        canProcessKey = true;
+                        escaped = false;
+                    } else if(ch == 67) {
+                        ch = KEY_RIGHT;
+                        canProcessKey = true;
+                        escaped = false;
+                    } else if(ch == 53) {
+                        ch = KEY_PPAGE;
+                        canProcessKey = true;
+                        escaped = false;
+                    } else if(ch == 54) {
+                        ch = KEY_NPAGE;
+                        canProcessKey = true;
+                        escaped = false;
+                    }
                 }
-            }
-            updateWindowSize();
-            checkFileChanged();
-            if(canProcessKey) {
-                processKey(ch);
+                updateWindowSize();
+                checkFileChanged();
+                if(canProcessKey) {
+                    processKey(ch);
+                }
+            } catch(Exception e) {
+                showMultiLineMsg("Unhandled error - PRESS ENTER",e.getMessage());
             }
         }
+
         console.endwin();
     }
 

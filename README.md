@@ -35,17 +35,18 @@ Keys are meant to be a little like `less`.
 | b     | Next bookmark                             |
 | B     | Prev bookmark                             |
 | o     | Toggle showing line numbers               |
+| /     | Search                                    |
+| ?     | Regular expression search                 |
+| n     | Search next                               |
+| N     | Search previous                           |
+| c     | Toggle ignore case (default ignore)       |
+| g     | Goto specified line                       |
 
 Not yet implemented:
 
 | Key   | Action                                    |
 |-------|---                                        |
-| /     | Search                                    |
-| ?     | Regular expression search                 |
-| n     | Search next                               |
-| N     | Search previous                           |
 | &     | Display only matching lines               |
-| g     | Goto specified line                       |
 
 
 
