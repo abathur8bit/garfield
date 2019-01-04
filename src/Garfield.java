@@ -72,7 +72,6 @@ public class Garfield {
     private static final int KEY_SEARCH_NEXT = 'n';
     private static final int KEY_SEARCH_PREV = 'N';
     private static final int KEY_ENTER = 10;
-    private static final int KEY_CR = 13;
     private static final int KEY_BACKSPACE = 127;
     private static final int KEY_RELOAD = 'r';
     private static final int KEY_GOTO = 'g';
@@ -99,7 +98,6 @@ public class Garfield {
     private String query;
     private boolean queryWasRegex = false;
     private boolean ignoreCase = true;
-    private boolean isWindows = false;
 
     private static void usage() {
         System.out.println("Garfield Log Viewer");
@@ -107,33 +105,21 @@ public class Garfield {
     }
 
     public static void main(String[] args) throws IOException {
-        boolean isWindows = false;
-        String filename = null;
-
         if(args.length < 1) {
             usage();
         }
 
-        for(int i=0; i<args.length; i++) {
-            if(args[i].equals("makefile")) {
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
-                int num = Integer.parseInt(args[1]);
-                for(int j = 0; j < num; j++) {
-                    System.out.println(format.format(new Date()));
-                }
-                System.exit(0);
-            } else if(args[i].equalsIgnoreCase("-w") || args[i].equals("--windows")) {
-                isWindows = true;
-                System.out.println("isWindows");
-            } else {
-                filename = args[i];
+        if(args[0].equals("makefile")) {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+            int num = Integer.parseInt(args[1]);
+            for(int i=0; i<num; i++) {
+                System.out.println(format.format(new Date()));
             }
+            System.exit(0);
         }
-
-        File f = new File(filename);
+        File f = new File(args[0]);
         if(f.exists()) {
-            Garfield app = new Garfield(filename);
-            app.isWindows = isWindows;
+            Garfield app = new Garfield(args[0]);
             app.loadFile();
             app.view();
         } else {
@@ -405,11 +391,6 @@ public class Garfield {
             }
         }
 
-        //make sure the line isn't too long to fit on a screen line
-        if(row.length() >= screenWidth) {
-            row.delete(screenWidth-1,row.length());
-        }
-
         console.move(x,y);
         int pair;      //line color pair
         if(selected) {
@@ -466,27 +447,17 @@ public class Garfield {
      * Help 'h' | 1:1/32 | a.txt | C R F | Updated: Mon Dec 24 16:36:04 EST 2018 | W:95 H:27
      */
     private void showStatusBar() {
-        final String separator = " | ";
-        final int statusBarToggles = 2; //how many characters are we showing for the toggles below
         final int activePair = MESSAGE_PAIR;
         console.attron(STATUS_BAR_PAIR);
         final int currentLine = lineScreen + lineOffset + 1;   //when showing the user, first line is 1, not 0.
         console.move(0,getMaxY());
-
-        if(isWindows) {
-            fillLine(screenWidth-1,' ');    //we can't draw the very last char or the screen will scroll
-        } else {
-            fillLine(screenWidth,' ');
-        }
+        fillLine(screenWidth,' ');
         console.move(0,getMaxY());
 
-        String status = "Help 'h'"+separator+(horzOffset+1)+":"+currentLine+"/"+linesInFile+separator;
-        console.printw(status);
+        console.printw("Help 'h' | "+(horzOffset+1)+":"+currentLine+"/"+linesInFile+" | ");
         if(ignoreCase) {
             console.attron(activePair);
         }
-
-        //status bar toggles
         console.printw("C");
         if(ignoreCase) {
             console.attron(STATUS_BAR_PAIR);
@@ -499,7 +470,9 @@ public class Garfield {
             console.attron(STATUS_BAR_PAIR);
         }
 
-        console.printw(separator+filename.substring(0,Math.min(filename.length(),screenWidth-status.length()-statusBarToggles+separator.length())));
+        console.printw(" | "+filename);
+
+//        console.printw("Line "+currentLine+" of "+ linesInFile +" | lineOffset "+ lineOffset +" | lineScreen "+ lineScreen +" | W:"+screenWidth+" H:"+screenHeight);
         console.attroff(STATUS_BAR_PAIR);
     }
 
@@ -513,18 +486,6 @@ public class Garfield {
     private void fillLine(int width, char ch) {
         for(int i=0; i<width; i++) {
             console.printw(""+ch);
-        }
-    }
-
-    private void clearLine(int y) {
-        final char fillChar = ' ';
-
-        console.move(0,y);
-
-        if(isWindows) {
-            fillLine(screenWidth-1,fillChar);
-        } else {
-            fillLine(screenWidth,fillChar);
         }
     }
 
@@ -716,10 +677,9 @@ public class Garfield {
      */
     void showMsg(String msg)
     {
-        final int y = getMaxY();
-        console.move(0,y);
+        console.move(0,console.getHeight()-1);
         console.attron(MESSAGE_PAIR);
-        clearLine(y);
+        fillLine(screenWidth,' ');
         console.printCenterX(getMaxY(),msg.trim()+" - PRESS ENTER");
         console.attroff(MESSAGE_PAIR);
         console.refresh();
@@ -777,7 +737,8 @@ public class Garfield {
     private void search(boolean useRegex) {
         console.attron(MESSAGE_PAIR);
         final int x=0,y=getMaxY();
-        clearLine(y);
+        console.move(x,y);
+        fillLine(screenWidth,' ');
         console.move(x,y);
         String msg = "Find: ";
         if(useRegex) {
@@ -910,16 +871,17 @@ public class Garfield {
             if(ch == KEY_BACKSPACE) {
                 if(buff.length()>0) {
                     buff.deleteCharAt(buff.length()-1);
-                    clearLine(y);
+                    console.move(x,y);
+                    fillLine(screenWidth,' ');
                     console.move(x,y);
                     console.printw(msg+buff.toString());
                 }
-            } else if(ch != KEY_ENTER && ch != KEY_CR) {
+            } else if(ch != KEY_ENTER) {
                 String letter = String.format("%c",ch);
                 buff.append(letter);
                 console.printw(letter);
             }
-        } while(ch != KEY_ENTER && ch != KEY_CR);
+        } while(ch != KEY_ENTER);
         console.timeout(TIMEOUT_DELAY); //back to normal
         return buff.toString();
     }
@@ -928,9 +890,9 @@ public class Garfield {
     private void gotoLine() {
         console.attron(MESSAGE_PAIR);
         final int x=0,y=getMaxY();
-        clearLine(y);
-        console.refresh();
         console.move(x,y);
+        fillLine(screenWidth,' ');
+        console.refresh();
         String lineInput = readLine("Goto line: ");
         if(lineInput.length() > 0) {
             int lineNum;
