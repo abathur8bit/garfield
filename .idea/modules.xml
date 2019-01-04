@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/garfield.iml" filepath="$PROJECT_DIR$/.idea/garfield.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../nconsole/src/nconsole.iml" filepath="$PROJECT_DIR$/../nconsole/src/nconsole.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../nconsole/nconsole.iml" filepath="$PROJECT_DIR$/../nconsole/nconsole.iml" />
     </modules>
   </component>
 </project>

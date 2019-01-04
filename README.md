@@ -10,14 +10,18 @@ Garifled is written in Java. Since Java doesn't provide the ability to monitor t
 **Note:** Windows support isn't in place yet. Plan is to use the same methods as on *nix systems. 
 
 
+# Installing
+Deployment could use some work, sorry. Grab all the files in the dist folder, copy to your bin folder, or somewhere in your path, then run the script.
+
+# Building
+ *todo*
+
 # Usage
 $ glov filename
 
 Filename is the text file you want to view.
 
 
-# Building/running
-Deployment could use some work, sorry. You can use the files in the dist folder to just start using it. 
 
 # Keymap
 Keys are meant to be a little like `less`. 
@@ -54,7 +58,7 @@ Not yet implemented:
 | &             | Display only matching lines               |
 
 
-# Features explained
+# Features 
 Explanation of features.
 
 
@@ -74,15 +78,6 @@ Like `tail -f` or `less +F`.
 Reloads the file from disk. Position in file, and any bookmarks are preserved.
 
 
-# TODO
-- Filter (&) to display only matching lines, will need to show something on the status bar to indicate we are filtering
-- Multiple file support
-- Search shows the matching line *and* highlight the matching text
-- Word wrap
-- Remember bookmarks in files viewed
-- Launch Garfield with -l param will start the last session
- 
-
 
 ## Search
 Search history. When you hit the up arrow, it will show previous queries. Down will show the next query. When it goes past the last one, a blank line is shows. 
@@ -98,16 +93,11 @@ When **follow** mode is active, all windows are set to follow mode. Later revs w
 Could use the number keys to select what file to activate. Then you can have support for 9 files, if you use 0 to close a file.
 
 
-#JNI
+# JNI
+
+
 See [nconsole] for Java Native Interface (JNI) library.
 
-
-# Log file blocks
-This section is for notes on how to break up the blocks of a log file. Regex strings I can use to identify the start of a log entry.
-
-Finds a date in the form of "2018/12/12" from the start of the line. The '/' can be any character. I have see / and - used already.
-
-^\d\d\d\d.\d\d.\d\d
 
 
 [garfield]: https://github.com/abathur8bit/garfield
